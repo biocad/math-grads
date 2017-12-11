@@ -1,0 +1,13 @@
+resolver: nightly-2017-09-26
+
+packages:
+- '.'
+
+- location:
+    git:    https://github.com/biocad/math-angem.git
+    commit: 0.1.0.0
+  extra-dep: true
+
+flags: {}
+
+extra-package-dbs: []
