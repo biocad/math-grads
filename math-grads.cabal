@@ -1,6 +1,6 @@
-name:                math-graph
-version:             0.0.0.1
-homepage:            https://github.com/biocad/math-graph#readme
+name:                math-grads
+version:             0.0.0.2
+homepage:            https://github.com/biocad/math-grads#readme
 license:             BSD3
 license-file:        LICENSE
 author:              Alexandr Sadovnikov
@@ -13,19 +13,21 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Math.Graph.Algo.Cycles
-                     , Math.Graph.Algo.Interaction
-                     , Math.Graph.Algo.Paths
-                     , Math.Graph.Algo.Traversals
-                     , Math.Graph.Class
-                     , Math.Graph.GenericGraph
-                     , Math.Graph.Utils
-  other-modules:       Math.Graph.Drawing.Internal.Coords
-                     , Math.Graph.Drawing.Internal.CyclesPathsAlignment
-                     , Math.Graph.Drawing.Internal.Utils
+  exposed-modules:     Math.Grads.Algo.Cycles
+                     , Math.Grads.Algo.Interaction
+                     , Math.Grads.Algo.Paths
+                     , Math.Grads.Algo.Traversals
+                     , Math.Grads.Class
+                     , Math.Grads.GenericGraph
+                     , Math.Grads.Utils
+  other-modules:       Math.Grads.Drawing.Internal.Coords
+                     , Math.Grads.Drawing.Internal.Cycles
+                     , Math.Grads.Drawing.Internal.CyclesPathsAlignment
+                     , Math.Grads.Drawing.Internal.Utils
   build-depends:       base >= 4.7 && < 5
                      , array
                      , containers
+                     , either
                      , linear
                      , math-angem
                      , mtl
@@ -45,4 +47,4 @@ test-suite Graph-test
 
 source-repository head
   type:     git
-  location: https://github.com/biocad/math-angem
+  location: https://github.com/biocad/math-grads

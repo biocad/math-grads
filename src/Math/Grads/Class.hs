@@ -1,4 +1,4 @@
-module Math.Graph.Class
+module Math.Grads.Class
   ( EdgeList
   , Graph (..)
   , GraphEdge

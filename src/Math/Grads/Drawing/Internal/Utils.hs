@@ -1,4 +1,4 @@
-module Math.Graph.Drawing.Internal.Utils
+module Math.Grads.Drawing.Internal.Utils
   ( Coord
   , CoordList
   , randomVectors
@@ -18,8 +18,8 @@ module Math.Graph.Drawing.Internal.Utils
 import           Data.List                   (unfoldr)
 import           Linear.V2                   (V2 (..))
 import           Math.Angem                  (reflectPoint)
-import           Math.Graph.Algo.Interaction (isIncident)
-import           Math.Graph.Class            (GraphEdge)
+import           Math.Grads.Algo.Interaction (isIncident)
+import           Math.Grads.Class            (GraphEdge)
 import           System.Random               (StdGen, randomR)
 
 type CoordList e = [Coord e]

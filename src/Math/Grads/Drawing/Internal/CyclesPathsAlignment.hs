@@ -1,24 +1,22 @@
-module Math.Graph.Drawing.Internal.CyclesPathsAlignment
+module Math.Grads.Drawing.Internal.CyclesPathsAlignment
   ( alignCyclesAndPaths
   , bondsToAlignTo
   , bondsToAlignToExtreme
   ) where
 
 import           Control.Arrow                      (first, second, (***))
-import           Data.Either                        (isLeft, isRight)
 import           Data.Either                        (partitionEithers)
 import           Data.List                          (find)
-import           Data.Maybe                         (catMaybes, fromJust,
-                                                     isJust, listToMaybe)
+import           Data.Maybe                         (catMaybes, listToMaybe)
 import           Linear.Matrix                      ((!*))
 import           Linear.Metric                      (dot, norm)
 import           Linear.V2                          (V2 (..))
 import           Linear.Vector                      (negated, (*^))
 import           Math.Angem                         (alignmentFunc, rotation2D)
-import           Math.Graph.Algo.Paths              (findBeginnings)
-import           Math.Graph.Class                   (EdgeList)
-import           Math.Graph.Drawing.Internal.Coords (bondLength)
-import           Math.Graph.Drawing.Internal.Utils  (Coord, CoordList,
+import           Math.Grads.Algo.Paths              (findBeginnings)
+import           Math.Grads.Class                   (EdgeList)
+import           Math.Grads.Drawing.Internal.Coords (bondLength)
+import           Math.Grads.Drawing.Internal.Utils  (Coord, CoordList,
                                                      cleanCoordList,
                                                      tupleToList)
 
@@ -88,8 +86,8 @@ findBondsToFind bonds = catMaybes ((\ind -> find (\(a, b, _) -> a == ind || b ==
 
 -- | If we have comlicated situation where we need to calculate bondst to align to for vertex in cycle that has more then 2 neighbors
 -- | then we pass direction in which we want to place neighbors and use `Extreme` function. Otherwise we use ordinary function
-bondsToAlignToExtreme :: (V2 Float, V2 Float) -> Coord e -> Coord e -> Int -> [(V2 Float, V2 Float)]
-bondsToAlignToExtreme (beg, end) _ _ number = resultingVectors
+bondsToAlignToExtreme :: (V2 Float, V2 Float) -> Int -> [(V2 Float, V2 Float)]
+bondsToAlignToExtreme (beg, end) number = resultingVectors
   where
     direction = end - beg
     startingPointComplicated = rotation2D (-40.0) !* ((bondLength / norm direction) *^ direction)

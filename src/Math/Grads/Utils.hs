@@ -1,4 +1,4 @@
-module Math.Graph.Utils
+module Math.Grads.Utils
   ( nub
   , subsets
   , uniter

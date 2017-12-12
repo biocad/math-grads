@@ -1,4 +1,4 @@
-module Math.Graph.Algo.Paths
+module Math.Grads.Algo.Paths
   ( allPathsInGraph
   , allPathsFromVertex
   , dfsAllPaths
@@ -12,11 +12,11 @@ import           Control.Monad.State.Class   (get, modify)
 import           Data.Map                    (Map, keys, (!))
 import           Data.Maybe                  (isJust)
 
-import           Math.Graph.Algo.Interaction (edgeListToMap, getVertexAdjacent,
+import           Math.Grads.Algo.Interaction (edgeListToMap, getVertexAdjacent,
                                               matchEdges, sortBondList)
-import           Math.Graph.Class            (EdgeList, Graph (..))
-import           Math.Graph.GenericGraph     (GenericGraph)
-import           Math.Graph.Utils            (nub, subsets, uniter)
+import           Math.Grads.Class            (EdgeList, Graph (..))
+import           Math.Grads.GenericGraph     (GenericGraph)
+import           Math.Grads.Utils            (nub, subsets, uniter)
 
 -- Finds all vertices that have only one neighbor
 findBeginnings :: EdgeList e -> [Int]

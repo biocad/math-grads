@@ -1,4 +1,4 @@
-module Math.Graph.Drawing.Internal.Coords
+module Math.Grads.Drawing.Internal.Coords
   ( Coord
   , CoordList
   , Link
@@ -16,9 +16,9 @@ import           Linear.Metric                     (norm)
 import           Linear.V2                         (V2 (..))
 import           Linear.Vector                     ((^/))
 import           Math.Angem                        (alignmentFunc, d2)
-import           Math.Graph.Algo.Interaction       ((~=))
-import           Math.Graph.Class                  (EdgeList, GraphEdge)
-import           Math.Graph.Drawing.Internal.Utils (Coord, CoordList,
+import           Math.Grads.Algo.Interaction       ((~=))
+import           Math.Grads.Class                  (EdgeList, GraphEdge)
+import           Math.Grads.Drawing.Internal.Utils (Coord, CoordList,
                                                     tupleToList, uV2)
 
 -- (Number of atom, bond) for linked paths

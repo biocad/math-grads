@@ -1,6 +1,6 @@
 {-# LANGUAGE InstanceSigs #-}
 
-module Math.Graph.GenericGraph
+module Math.Grads.GenericGraph
   ( GenericGraph (..)
   , addVertices
   , addEdges
@@ -25,7 +25,7 @@ import qualified Data.Map.Strict  as M
 import           Data.Maybe       (fromJust, fromMaybe)
 import qualified Data.Set         as S
 
-import           Math.Graph.Class (Graph (..))
+import           Math.Grads.Class (Graph (..))
 
 data GenericGraph v e = GenericGraph {
     gIndex     :: A.Array Int v,

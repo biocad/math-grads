@@ -1,4 +1,4 @@
-module Math.Graph.Algo.Traversals
+module Math.Grads.Algo.Traversals
   ( bfsState
   , dfsCycle
   , dfsGenericGraph
@@ -15,12 +15,12 @@ import           Data.Map                    (Map, keys, (!))
 import qualified Data.Map                    as M
 import           Data.Maybe                  (fromJust)
 
-import           Math.Graph.Algo.Interaction (edgeListToMap, getIndices,
+import           Math.Grads.Algo.Interaction (edgeListToMap, getIndices,
                                               getOtherEnd, matchEdges, (~=))
-import           Math.Graph.Class            (EdgeList, Graph (..))
-import           Math.Graph.GenericGraph     (GenericGraph, gAdjacency, gIndex,
+import           Math.Grads.Class            (EdgeList, Graph (..))
+import           Math.Grads.GenericGraph     (GenericGraph, gAdjacency, gIndex,
                                               subgraph)
-import           Math.Graph.Utils            (nub)
+import           Math.Grads.Utils            (nub)
 
 -- Classic dfs
 dfs :: EdgeList e -> Int -> EdgeList e

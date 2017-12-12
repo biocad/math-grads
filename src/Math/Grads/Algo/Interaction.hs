@@ -1,4 +1,4 @@
-module Math.Graph.Algo.Interaction
+module Math.Grads.Algo.Interaction
   ( areAdjacent
   , doubleEdgeList
   , edgeListToMap
@@ -24,8 +24,8 @@ import           Data.Map         (Map)
 import qualified Data.Map         as M
 import           Data.Maybe       (fromJust, isJust)
 
-import           Math.Graph.Class (EdgeList, GraphEdge, edgeType)
-import           Math.Graph.Utils (nub)
+import           Math.Grads.Class (EdgeList, GraphEdge, edgeType)
+import           Math.Grads.Utils (nub)
 
 (~=) :: GraphEdge e -> GraphEdge e -> Bool
 (b, e, _) ~= (b', e', _) = (b == b' && e == e') || (b == e' && e == b')
@@ -79,7 +79,7 @@ getEdgeIncident bs n | n >= length bs = fail ""
 getOtherEnd :: GraphEdge e -> Int -> Int
 getOtherEnd (b, e, _) n | b == n = e
                         | e == n = b
-                        | otherwise = undefined
+                        | otherwise = error "There is no such index in edge."
 
 -- EDGE LIST FUNCTIONS
 doubleEdgeList :: EdgeList e -> EdgeList e

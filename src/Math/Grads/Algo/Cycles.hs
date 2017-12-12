@@ -1,4 +1,4 @@
-module Math.Graph.Algo.Cycles
+module Math.Grads.Algo.Cycles
   ( findCycles
   , findLocalCycles
   , isEdgeInCycle
@@ -8,11 +8,11 @@ import           Control.Monad.State         (State, runState)
 import           Control.Monad.State.Class   (get, modify)
 import           Data.List                   (partition, sort, union, (\\))
 
-import           Math.Graph.Algo.Interaction (getEnds, getIndices, getOtherEnd,
+import           Math.Grads.Algo.Interaction (getEnds, getIndices, getOtherEnd,
                                               getVertexIncident, haveSharedEdge)
-import           Math.Graph.Algo.Paths       (dfsAllPaths)
-import           Math.Graph.Algo.Traversals  (dfsSt)
-import           Math.Graph.Class            (EdgeList, GraphEdge)
+import           Math.Grads.Algo.Paths       (dfsAllPaths)
+import           Math.Grads.Algo.Traversals  (dfsSt)
+import           Math.Grads.Class            (EdgeList, GraphEdge)
 
 -- | Takes adjacency list and finds non-redundant set of simple cycles
 -- | Cycles sharing in common one edge are considered to be one cycle
