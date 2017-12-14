@@ -14,17 +14,17 @@ import           Linear.V2                          (V2 (..))
 import           Linear.Vector                      (negated, (*^))
 import           Math.Angem                         (alignmentFunc, rotation2D)
 import           Math.Grads.Algo.Paths              (findBeginnings)
-import           Math.Grads.Class                   (EdgeList)
 import           Math.Grads.Drawing.Internal.Coords (bondLength)
 import           Math.Grads.Drawing.Internal.Utils  (Coord, CoordList,
                                                      cleanCoordList,
                                                      tupleToList)
+import           Math.Grads.Graph                   (EdgeList)
 
 type CoordsEnds e = (CoordList e, EdgeList e)
 
 -- Given cycles and paths between them unites everything into one structure
 alignCyclesAndPaths :: Eq e => [CoordList e] -> [CoordList e] -> Maybe (CoordList e)
-alignCyclesAndPaths cycles paths = greedyAlignmentOfCyclesAndPaths (cyclesWithRestoredEnds ++ pathsWithRestoredEnds)
+alignCyclesAndPaths paths cycles = greedyAlignmentOfCyclesAndPaths (cyclesWithRestoredEnds ++ pathsWithRestoredEnds)
   where
     cyclesWithRestoredEnds = fmap linksForCycle cycles
     pathsWithRestoredEnds = fmap linksForPath paths

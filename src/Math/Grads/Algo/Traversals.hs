@@ -17,9 +17,9 @@ import           Data.Maybe                  (fromJust)
 
 import           Math.Grads.Algo.Interaction (edgeListToMap, getIndices,
                                               getOtherEnd, matchEdges, (~=))
-import           Math.Grads.Class            (EdgeList, Graph (..))
 import           Math.Grads.GenericGraph     (GenericGraph, gAdjacency, gIndex,
                                               subgraph)
+import           Math.Grads.Graph            (EdgeList, Graph (..))
 import           Math.Grads.Utils            (nub)
 
 -- Classic dfs

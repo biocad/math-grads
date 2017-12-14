@@ -25,7 +25,7 @@ import qualified Data.Map.Strict  as M
 import           Data.Maybe       (fromJust, fromMaybe)
 import qualified Data.Set         as S
 
-import           Math.Grads.Class (Graph (..))
+import           Math.Grads.Graph (Graph (..))
 
 data GenericGraph v e = GenericGraph {
     gIndex     :: A.Array Int v,

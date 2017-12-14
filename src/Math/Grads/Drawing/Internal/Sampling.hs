@@ -1,51 +1,53 @@
-module Drawing.Internal.Sampling (bestSample) where
+{-# LANGUAGE ScopedTypeVariables #-}
 
-import           Data.List                  (delete, find)
-import           Data.Maybe                 (fromJust)
-import           System.Random              (StdGen)
+module Math.Grads.Drawing.Internal.Sampling (Constraint (..), bestSample) where
 
-import           Chemistry.Molecule         (Bond (..), BondList, MolBond)
-import           Drawing.Internal.Utilities (Coord, CoordList, randomVectors,
-                                             reflectBond)
-import           Graph.Paths                (findBeginnings)
-import           Graph.Traversals           (dfs)
-import           Math.Math                  (areIntersected, myEqV2)
+import           Data.List                          (delete, find)
+import           Data.Map.Strict                    (Map, (!))
+import           Data.Maybe                         (fromJust)
+import           Linear.V2                          (V2)
+import           Math.Angem                         (areIntersected, d2, eqV2)
+import           Math.Grads.Algo.Traversals         (dfs)
+import           Math.Grads.Drawing.Internal.Coords (coordListToMap)
+import           Math.Grads.Drawing.Internal.Utils  (Coord, CoordList,
+                                                     randomVectors, reflectBond)
+import           Math.Grads.Graph                   (EdgeList, GraphEdge)
+import           System.Random                      (StdGen)
+
+data Constraint = DistGEq Int Int Float deriving (Show, Ord, Eq)
 
 -- Find conformation with minimal number of intersections
-bestSample :: CoordList -> BondList -> StdGen -> Maybe CoordList
-bestSample coords bondsOfPaths stdGen = if findIntersections resSample /= 0 then Nothing
-                                        else Just resSample
+bestSample :: Eq e => StdGen -> [Constraint] -> EdgeList e -> CoordList e -> Maybe (CoordList e)
+bestSample stdGen constraints bondsOfPaths coords = if findIntersections constraints resSample /= 0 then Nothing
+                                                    else Just resSample
   where
-    begs = findBeginnings (fmap fst coords)
-    rotatableBonds = filter (\(a, b, t) -> t == Single && not (a `elem` begs || b `elem` begs)) bondsOfPaths
-
-    samples = generateSamples coords rotatableBonds stdGen
-    curInt = findIntersections (head samples)
+    samples = generateSamples stdGen coords bondsOfPaths
+    curInt = findIntersections constraints (head samples)
 
     resSample = if curInt == 0 then head samples
-                else minInterSample (tail samples) (head samples) curInt
+                else minInterSample constraints (tail samples) (head samples) curInt
 
-minInterSample :: [CoordList] -> CoordList -> Int -> CoordList
-minInterSample [] prev _ = prev
-minInterSample (x : xs) prev prevMin | curInt' >= prevMin = minInterSample xs prev prevMin
-                                     | curInt' == 0 = x
-                                     | otherwise = minInterSample xs x curInt'
+minInterSample :: Eq e => [Constraint] -> [CoordList e] -> CoordList e -> Int -> CoordList e
+minInterSample _ [] prev _ = prev
+minInterSample constraints (x : xs) prev prevMin | curInt' >= prevMin = minInterSample constraints xs prev prevMin
+                                                 | curInt' == 0 = x
+                                                 | otherwise = minInterSample constraints xs x curInt'
   where
-    curInt' = findIntersections x
+    curInt' = findIntersections constraints x
 
-generateSamples :: CoordList -> BondList -> StdGen -> [CoordList]
-generateSamples coords [] _ = [coords]
-generateSamples coords rotatableBonds stdGen = (rotateOnBonds coords <$>) filteredSubsets
+generateSamples :: Eq e => StdGen -> CoordList e -> EdgeList e -> [CoordList e]
+generateSamples _ coords [] = [coords]
+generateSamples stdGen coords rotatableBonds = (rotateOnBonds coords <$>) filteredSubsets
   where
     numberOfSamples = 2000
     lengthOfBonds = length rotatableBonds
     vectors = replicate lengthOfBonds 0 : randomVectors stdGen lengthOfBonds numberOfSamples
     filteredSubsets = fmap (\vector -> concatMap (\(x, y) -> [y | x == 1]) (zip vector rotatableBonds)) vectors
 
-rotateOnBonds :: CoordList -> BondList -> CoordList
+rotateOnBonds :: Eq e => CoordList e -> EdgeList e -> CoordList e
 rotateOnBonds = foldl rotateOnBond
 
-rotateOnBond :: CoordList -> MolBond -> CoordList
+rotateOnBond :: Eq e => CoordList e -> GraphEdge e -> CoordList e
 rotateOnBond coords bond = res
   where
     bondItself@((_, b, _), (coordA, coordB)) = fromJust (find (\(bond', _) -> bond' == bond) coords)
@@ -59,26 +61,39 @@ rotateOnBond coords bond = res
     res = if null toTheLeftCoords || null toTheRightCoords then coords
           else doNotRotate ++ ((`reflectBond` (coordA, coordB)) <$> rotate)
 
-doOverlap :: Coord -> Coord -> Bool
+doOverlap :: Coord e -> Coord e -> Bool
 doOverlap ((a, b, _), (coordA, coordB)) ((a', b', _), (coordA', coordB')) = condA || condB
   where
-    condA = coordA `myEqV2` coordA' && coordB `myEqV2` coordB' ||
-      coordA `myEqV2` coordB' && coordB `myEqV2` coordA'
-    condB = a /= a' && coordA `myEqV2` coordA' || a /= b' && coordA `myEqV2` coordB' ||
-      b /= a' && coordB `myEqV2` coordA' || b /= b' && coordB `myEqV2` coordB'
+    condA = coordA `eqV2` coordA' && coordB `eqV2` coordB' ||
+      coordA `eqV2` coordB' && coordB `eqV2` coordA'
+    condB = a /= a' && coordA `eqV2` coordA' || a /= b' && coordA `eqV2` coordB' ||
+      b /= a' && coordB `eqV2` coordA' || b /= b' && coordB `eqV2` coordB'
 
-findIntersections :: CoordList -> Int
-findIntersections = helper
+findIntersections :: forall e. Eq e => [Constraint] -> CoordList e -> Int
+findIntersections constraints coords = addConstraints coords constraints + helper coords
    where
-     helper :: CoordList -> Int
+     helper :: CoordList e -> Int
      helper []       = error "Find intersections helper on empty list."
      helper [_]      = 0
      helper (x : xs) = foldl (allLeftIntersections x) 0 xs + helper xs
 
-allLeftIntersections :: Coord -> Int -> Coord -> Int
+allLeftIntersections :: Eq e => Coord e -> Int -> Coord e -> Int
 allLeftIntersections coord x' coord' = x' + addIfIntersect coord coord'
 
-addIfIntersect :: Coord -> Coord -> Int
-addIfIntersect x@(bond, coords) coord@(bond', coords') = if cond then 1 else 0
+addIfIntersect :: Eq e => Coord e -> Coord e -> Int
+addIfIntersect x@(bond, coords) coord@(bond', coords') = fromEnum cond
   where
     cond = bond /= bond' && (doOverlap x coord || areIntersected coords coords')
+
+addConstraints :: Eq e => CoordList e -> [Constraint] -> Int
+addConstraints coords = sum . fmap (fromEnum . distGEq coordsMap)
+  where
+    coordsMap = coordListToMap coords
+
+distGEq :: Map Int (V2 Float) -> Constraint -> Bool
+distGEq coordsMap (DistGEq indA indB thresh) = res
+  where
+    res = distPred (coordsMap ! indA) (coordsMap ! indB)
+
+    distPred :: V2 Float -> V2 Float -> Bool
+    distPred x y = sqrt (d2 x y) < thresh

@@ -12,7 +12,7 @@ import           Math.Grads.Algo.Interaction (getEnds, getIndices, getOtherEnd,
                                               getVertexIncident, haveSharedEdge)
 import           Math.Grads.Algo.Paths       (dfsAllPaths)
 import           Math.Grads.Algo.Traversals  (dfsSt)
-import           Math.Grads.Class            (EdgeList, GraphEdge)
+import           Math.Grads.Graph            (EdgeList, GraphEdge)
 
 -- | Takes adjacency list and finds non-redundant set of simple cycles
 -- | Cycles sharing in common one edge are considered to be one cycle
