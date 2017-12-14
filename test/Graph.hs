@@ -3,10 +3,10 @@
 module Main where
 
 import           Data.List               (sort)
-import           Math.Graph.Class        (fromList, incident, safeIncident,
-                                          toList, (!.), (!>), (?>))
-import           Math.Graph.GenericGraph (GenericGraph, removeEdges,
+import           Math.Grads.GenericGraph (GenericGraph, removeEdges,
                                           removeVertices, subgraph)
+import           Math.Grads.Graph        (fromList, incident, safeIncident,
+                                          toList, (!.), (!>), (?>))
 import           Test.Hspec
 
 main :: IO ()

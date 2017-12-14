@@ -14,7 +14,8 @@ import           Math.Grads.Drawing.Internal.Utils  (Coord, CoordList,
 import           Math.Grads.Graph                   (EdgeList, GraphEdge)
 import           System.Random                      (StdGen)
 
-data Constraint = DistGEq Int Int Float deriving (Show, Ord, Eq)
+data Constraint = VPair { vPair :: (Int -> V2 Float) -> Bool
+                        }
 
 -- Find conformation with minimal number of intersections
 bestSample :: Eq e => StdGen -> [Constraint] -> EdgeList e -> CoordList e -> Maybe (CoordList e)
@@ -86,14 +87,6 @@ addIfIntersect x@(bond, coords) coord@(bond', coords') = fromEnum cond
     cond = bond /= bond' && (doOverlap x coord || areIntersected coords coords')
 
 addConstraints :: Eq e => CoordList e -> [Constraint] -> Int
-addConstraints coords = sum . fmap (fromEnum . distGEq coordsMap)
+addConstraints coords = sum . fmap (\x -> fromEnum (vPair x (coordsMap !)))
   where
     coordsMap = coordListToMap coords
-
-distGEq :: Map Int (V2 Float) -> Constraint -> Bool
-distGEq coordsMap (DistGEq indA indB thresh) = res
-  where
-    res = distPred (coordsMap ! indA) (coordsMap ! indB)
-
-    distPred :: V2 Float -> V2 Float -> Bool
-    distPred x y = sqrt (d2 x y) < thresh
