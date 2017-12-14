@@ -1,86 +1,92 @@
-module Drawing.Internal.Paths (getCoordsOfPath, findPaths) where
+{-# LANGUAGE ScopedTypeVariables #-}
 
-import           Data.List                             (delete, find, intersect,
-                                                        maximumBy, union, (\\))
-import           Data.Map.Strict                       (fromList, (!))
-import           Data.Maybe                            (fromJust, isJust)
-import           Data.Ord                              (comparing)
+module Math.Grads.Drawing.Internal.Paths (findPaths, getCoordsOfPath) where
 
-import           Chemistry.Molecule                    (BondList, MolBond)
-import           Drawing.Internal.Coords               (Link, bondLength)
-import           Drawing.Internal.CyclesPathsAlignment (bondsToAlignTo)
-import           Drawing.Internal.Utilities            (Coord, CoordList,
-                                                        findIncidentCoords,
-                                                        tupleToList)
-import           Graph.EdgeVertexUtils                 (getIndices,
-                                                        getSharedVertex,
-                                                        getVertexIncident,
-                                                        isIncident)
-import           Graph.Paths                           (dfsSearch,
-                                                        findBeginnings)
-import           Graph.Traversals                      (dfs)
-import           Linear.V2                             (V2 (..))
-import           Math.Math                             (alignmentFunc)
+import           Data.List                                        (delete, find,
+                                                                   intersect,
+                                                                   maximumBy,
+                                                                   union, (\\))
+import           Data.Map.Strict                                  (fromList,
+                                                                   (!))
+import           Data.Maybe                                       (catMaybes,
+                                                                   fromJust,
+                                                                   isJust)
+import           Data.Ord                                         (comparing)
+import           Linear.V2                                        (V2 (..))
+import           Math.Angem                                       (alignmentFunc)
+import           Math.Grads.Algo.Interaction                      (getIndices, getSharedVertex,
+                                                                   getVertexIncident,
+                                                                   isIncident)
+import           Math.Grads.Algo.Paths                            (dfsSearch, findBeginnings)
+import           Math.Grads.Algo.Traversals                       (dfs)
+import           Math.Grads.Drawing.Internal.Coords               (Link,
+                                                                   bondLength)
+import           Math.Grads.Drawing.Internal.CyclesPathsAlignment (bondsToAlignTo)
+import           Math.Grads.Drawing.Internal.Utils                (Coord,
+                                                                   CoordList,
+                                                                   findIncidentCoords,
+                                                                   tupleToList)
+import           Math.Grads.Graph                                 (EdgeList,
+                                                                   GraphEdge)
+type BondV2 = (V2 Float, V2 Float)
 
-data Path = Path {
+type PathWithLinks e = (CoordList e, [Link e])
+
+data Path e = Path {
   pStart  :: Int,
   pFinish :: Int,
-  pBonds  :: BondList
+  pBonds  :: EdgeList e
 }
 
 -- Calculates coordinates of path
-getCoordsOfPath :: BondList -> CoordList
+getCoordsOfPath :: forall e. Eq e => EdgeList e -> CoordList e
 getCoordsOfPath bonds = fst (greedy pathWithCoords)
   where
     paths = splitPathIntoLongest bonds []
     pathsWithCoords = fmap (\Path { pBonds=bonds' } -> pathToCoords bonds') paths
     pathWithCoords = zip pathsWithCoords (getLinks paths [])
 
-    getLinks :: [Path] -> [Int] -> [[Link]]
+    getLinks :: [Path e] -> [Int] -> [[Link e]]
     getLinks (x : xs) taken =
       let
         links = findLinkingPoints x taken xs
       in links : getLinks xs (taken `union` fmap fst (countNeighbors links))
-    getLinks _ _ = error "Linking point helper function on an empty list."
+    getLinks _ _ = error "No links for path."
 
-    greedy :: [(CoordList, [Link])] -> (CoordList, [Link])
+    greedy :: [PathWithLinks e] -> PathWithLinks e
     greedy [x]    = x
     greedy (x : xs) = greedy (uniteOnLinkingBonds x xs : filter (helper' x) xs)
     greedy _      = error "Greedy function on an empty list."
 
-    helper' :: (CoordList, [Link]) -> (CoordList, [Link]) -> Bool
+    helper' :: PathWithLinks e -> PathWithLinks e -> Bool
     helper' x' y' = null $ (snd <$> snd x') `intersect` (fst <$> fst y')
 
--- Takes path, list of vertices which have been processed and returns links for each path.
-findLinkingPoints :: Path -> [Int] -> [Path] -> [(Int, MolBond)]
+-- Takes path, list of vertices which have been processed and returns links for each path
+findLinkingPoints :: forall e. Path e -> [Int] -> [Path e] -> [Link e]
 findLinkingPoints Path { pBonds=list } taken = helper
   where
-    getInc :: Int -> BondList
+    getInc :: Int -> EdgeList e
     getInc n = filter (`isIncident` n) list
 
     couldTake :: Int -> Bool
     couldTake n = n `notElem` taken && (not . null $ getInc n)
 
-    helper :: [Path] -> [Link]
+    helper :: [Path e] -> [Link e]
     helper [] = []
     helper (Path beg end list' : xs) | couldTake beg = wrapResult beg list' : helper xs
                                      | couldTake end = wrapResult end list' : helper xs
                                      | otherwise = helper xs
 
-    wrapResult :: Int -> BondList -> Link
+    wrapResult :: Int -> EdgeList e -> Link e
     wrapResult n l = (fromJust $ getSharedVertex b1 b2, b2)
       where
         b1 = head $ getInc n
         b2 = head $ getVertexIncident l n
 
-splitPathIntoLongest :: BondList -> [Int] -> [Path]
+splitPathIntoLongest :: Eq e => EdgeList e -> [Int] -> [Path e]
 splitPathIntoLongest [] _ = []
 splitPathIntoLongest bonds taken = firstPath : splitPathIntoLongest restBonds newTaken
   where
-    firstPath = Path { pStart=start, pFinish=finish, pBonds=longestPath }
-    restBonds = bonds \\ longestPath
-    newTaken = taken `union` getIndices longestPath
-
     ends' = findBeginnings bonds
     ends = filter (`notElem` taken) ends'
 
@@ -92,7 +98,11 @@ splitPathIntoLongest bonds taken = firstPath : splitPathIntoLongest restBonds ne
     longestPath = maximumBy (comparing length) allPathsTrue
     [start, finish] = findBeginnings longestPath
 
-pathToCoords :: BondList -> CoordList
+    restBonds = bonds \\ longestPath
+    firstPath = Path { pStart=start, pFinish=finish, pBonds=longestPath }
+    newTaken = taken `union` getIndices longestPath
+
+pathToCoords :: forall e. EdgeList e -> CoordList e
 pathToCoords bonds = matchBondsOfPath coords bonds
   where
     angle = pi / 6.0
@@ -104,16 +114,16 @@ pathToCoords bonds = matchBondsOfPath coords bonds
     getPoint :: Float -> V2 Float
     getPoint m = V2 (radius * cos (m * angle)) (radius * sin (m * angle))
 
-    getIndicesEdges :: BondList ->  [Int]
+    getIndicesEdges :: EdgeList e ->  [Int]
     getIndicesEdges [] = error "Get indices edges on empy list."
     getIndicesEdges [(a, b, _)] = [a, b]
     getIndicesEdges (bnd@(a, b, _) : bnd'@(a', b', _) : xs) = if a == a' || a == b' then b : a : helper (bnd' : xs) bnd
                                                               else a : b : helper (bnd' : xs) bnd
 
-    helper :: BondList -> MolBond -> [Int]
+    helper :: EdgeList e -> GraphEdge e -> [Int]
     helper [] _ = error "Get indices edges helper on empty list."
     helper [(a', b', _)] (a, b, _) = if a' == a || a' == b then [b']
-                                              else [a']
+                                     else [a']
     helper (bnd@(a, b, _) : bnd'@(a', b', _) : xs) _ = if a == a' || a == b' then a : helper (bnd' : xs) bnd
                                                        else b : helper (bnd' : xs) bnd
 
@@ -125,16 +135,16 @@ buildPath (y : ys) = V2 0.0 0.0 : y : helper ys y
     helper [] _ = []
     helper (b:xs) b' = let newCoords = b + b' in newCoords : helper xs newCoords
 
-matchBondsOfPath :: [(Int, V2 Float)] -> BondList -> CoordList
+matchBondsOfPath :: forall e. [(Int, V2 Float)] -> EdgeList e -> CoordList e
 matchBondsOfPath matches = helper
   where
     mapOfCoords = fromList matches
 
-    helper :: BondList -> CoordList
+    helper :: EdgeList e -> CoordList e
     helper [] = []
     helper (bond@(a, b, _) : xs) = (bond, (mapOfCoords ! a, mapOfCoords ! b)) : helper xs
 
-uniteOnLinkingBonds :: (CoordList, [Link]) -> [(CoordList, [Link])] -> (CoordList, [Link])
+uniteOnLinkingBonds :: forall e. PathWithLinks e -> [PathWithLinks e] -> PathWithLinks e
 uniteOnLinkingBonds (mainPath, uniteThis) otherPaths = pathUniter coordsToAdd (mainPath, [])
   where
     counted = countNeighbors uniteThis
@@ -142,49 +152,49 @@ uniteOnLinkingBonds (mainPath, uniteThis) otherPaths = pathUniter coordsToAdd (m
 
     coordsToAdd = concatMap align neighbors
 
-    align :: (Int, [(V2 Float, V2 Float)]) -> [(CoordList, [Link])]
+    align :: (Int, [BondV2]) -> [PathWithLinks e]
     align (ind, toAlignBonds) = alignOnBonds <$> zip toAlignBonds (findNeighbors otherPaths ind)
 
-    getCoordsOfLinks :: (Int, Int) -> (Int, [(V2 Float, V2 Float)])
+    getCoordsOfLinks :: (Int, Int) -> (Int, [BondV2])
     getCoordsOfLinks (ind, counts) =
       let
         (leftBond, rightBond) = findAdjacent mainPath ind
       in (ind, bondsToAlignTo leftBond rightBond counts)
 
-    pathUniter :: [(CoordList, [Link])] -> (CoordList, [Link]) -> (CoordList, [Link])
+    pathUniter :: [PathWithLinks e] -> PathWithLinks e -> PathWithLinks e
     pathUniter [] res                   = res
     pathUniter ((a, b) : xs) (resA, resB) = pathUniter xs (resA ++ a, resB ++ b)
 
-countNeighbors :: [Link] -> [(Int, Int)]
+countNeighbors :: forall e. [Link e] -> [(Int, Int)]
 countNeighbors list = zip allInds (fmap (numberOfNeighbors list 0) allInds)
   where
     allInds = linkingIndices list []
 
-    linkingIndices :: [Link] -> [Int] -> [Int]
+    linkingIndices :: [Link e] -> [Int] -> [Int]
     linkingIndices [] res = res
     linkingIndices (x : xs) res = if fst x `elem` res then linkingIndices xs res
                                   else linkingIndices xs (fst x : res)
 
-    numberOfNeighbors :: [Link] -> Int -> Int -> Int
+    numberOfNeighbors :: [Link e] -> Int -> Int -> Int
     numberOfNeighbors [] acc _ = acc
     numberOfNeighbors (x : xs) acc ind = if fst x == ind then numberOfNeighbors xs (acc + 1) ind
                                          else numberOfNeighbors xs acc ind
 
-splitOnMultiplePoints :: BondList -> [Int] -> [BondList]
+splitOnMultiplePoints :: forall e. Eq e => EdgeList e -> [Int] -> [EdgeList e]
 splitOnMultiplePoints bonds cut = helper [bonds] cut []
   where
-    helper :: [BondList] -> [Int] -> [BondList] -> [BondList]
+    helper :: [EdgeList e] -> [Int] -> [EdgeList e] -> [EdgeList e]
     helper [] _ _ = error "Split on multiple points helper on empty list."
     helper lastCut [] res = res ++ lastCut
     helper (x : xs) (y : ys) res = if y `elem` getIndices x then helper (splitOnPoint x y ++ xs) ys res
-                                   else helper xs (y:ys) (x:res)
+                                   else helper xs (y : ys) (x : res)
 
-splitOnPoint :: BondList -> Int -> [BondList]
+splitOnPoint :: forall e. Eq e => EdgeList e -> Int -> [EdgeList e]
 splitOnPoint list point = filter (not . null) foundNeighbors
   where
     foundNeighbors = fmap splitter list
 
-    splitter :: MolBond -> BondList
+    splitter :: GraphEdge e -> EdgeList e
     splitter bond@(a, b, _) | a == point = bond : dfs (delete bond list) b
                             | b == point = bond : dfs (delete bond list) a
                             | otherwise = []
@@ -192,37 +202,37 @@ splitOnPoint list point = filter (not . null) foundNeighbors
 allPairs :: [Int] -> [Int] -> [(Int, Int)]
 allPairs starts ends = concatMap (\start -> fmap (\end -> (start, end)) ends) starts
 
--- This function is used for splitting one path into substantial pieces during calculation of coordinates of this path.
-findPointsToSplit :: BondList -> [Int] -> Maybe Int
+-- This function is used for splitting one path into substantial pieces during calculation of coordinates of this path
+findPointsToSplit :: forall e. EdgeList e -> [Int] -> Maybe Int
 findPointsToSplit _ [] = Nothing
 findPointsToSplit [] _ = Nothing
 findPointsToSplit [_] _ = Nothing
 findPointsToSplit list taken = helper ((tail . init) list)
   where
-    helper :: BondList -> Maybe Int
+    helper :: EdgeList e -> Maybe Int
     helper [] = Nothing
     helper ((a, b, _) : xs) | a `elem` taken = Just a
                             | b `elem` taken = Just b
                             | otherwise = helper xs
 
--- This function is used for splitting one path into several paths if one vertex of path belongs to cycle.
-findPointsToSplitHard :: BondList -> [Int] -> [Int]
+-- This function is used for splitting one path into several paths if one vertex of path belongs to cycle
+findPointsToSplitHard :: forall e. Eq e => EdgeList e -> [Int] -> [Int]
 findPointsToSplitHard _ [] = []
 findPointsToSplitHard [] _ = []
 findPointsToSplitHard [_] _ = []
 findPointsToSplitHard list taken = helper list []
   where
-    helper :: BondList -> [Int] -> [Int]
+    helper :: EdgeList e -> [Int] -> [Int]
     helper [] acc = acc
-    helper (x@(a, b, _):xs) acc  | a `notElem` acc && a `elem` taken && hasNeighbor a x = helper xs (a : acc)
-                                 | b `notElem` acc && b `elem` taken && hasNeighbor b x = helper xs (b : acc)
-                                 | otherwise = helper xs acc
+    helper (x@(a, b, _) : xs) acc  | a `notElem` acc && a `elem` taken && hasNeighbor a x = helper xs (a : acc)
+                                   | b `notElem` acc && b `elem` taken && hasNeighbor b x = helper xs (b : acc)
+                                   | otherwise = helper xs acc
 
-    hasNeighbor :: Int -> MolBond ->  Bool
+    hasNeighbor :: Int -> GraphEdge e ->  Bool
     hasNeighbor ind x = isJust (find (\bond -> bond /= x && isIncident bond ind) list)
 
 -- Finds all paths between cycles in graph
-findPaths :: BondList -> [Int] -> [BondList]
+findPaths :: Eq e => EdgeList e -> [Int] -> [EdgeList e]
 findPaths [] _ = []
 findPaths bonds [] = [bonds]
 findPaths bonds taken = allPathsTrue
@@ -230,13 +240,13 @@ findPaths bonds taken = allPathsTrue
     paths = findPaths' bonds
     allPathsTrue = concatMap (\x -> let cut = findPointsToSplitHard x taken in splitOnMultiplePoints x cut) paths
 
-findPaths' :: BondList -> [BondList]
+findPaths' :: Eq e => EdgeList e -> [EdgeList e]
 findPaths' [] = []
 findPaths' bonds@(x : _) = newPath : findPaths' (filter (`notElem` newPath) bonds)
   where
     newPath = findPath bonds bonds [x] x
 
-findPath :: BondList -> BondList -> BondList -> MolBond -> BondList
+findPath :: Eq e => EdgeList e -> EdgeList e -> EdgeList e -> GraphEdge e -> EdgeList e
 findPath [] _ found _ = found
 findPath (x@(a, b, _) : xs) bonds found pathFrom@(src, dst, _) = if cond then findPath xs bonds newFound pathFrom
                                                                  else findPath xs bonds found pathFrom
@@ -244,25 +254,25 @@ findPath (x@(a, b, _) : xs) bonds found pathFrom@(src, dst, _) = if cond then fi
     cond = (a == dst || b == src || a == src || b == dst) && (x `notElem` found)
     newFound = findPath bonds bonds (found ++ [x]) x
 
-alignOnBonds :: ((V2 Float, V2 Float), ((V2 Float, V2 Float), (CoordList, [(Int, MolBond)]))) -> (CoordList, [(Int, MolBond)])
+alignOnBonds :: (BondV2, (BondV2, PathWithLinks e)) -> PathWithLinks e
 alignOnBonds (coordsA, (coordsB, (list, toSave))) = (resCoords, toSave)
   where
     align = alignmentFunc (tupleToList coordsA) (tupleToList coordsB)
     resCoords = fmap (\(bond, (coordA', coordB')) -> (bond, (align coordA', align coordB'))) list
 
-findNeighbors :: [(CoordList, [Link])] -> Int -> [((V2 Float, V2 Float), (CoordList, [Link]))]
+findNeighbors :: [PathWithLinks e] -> Int -> [(BondV2, PathWithLinks e)]
 findNeighbors [] _ = []
-findNeighbors (x : xs) ind = if not (null found) then (fromJust (head found), x) : findNeighbors xs ind
+findNeighbors (x : xs) ind = if not (null found) then (head found, x) : findNeighbors xs ind
                              else findNeighbors xs ind
   where
-    found = filter isJust (fmap coordsOfAdjacentBond (fst x))
+    found = catMaybes (fmap coordsOfAdjacentBond (fst x))
 
-    coordsOfAdjacentBond :: Coord -> Maybe (V2 Float, V2 Float)
+    coordsOfAdjacentBond :: Coord e -> Maybe BondV2
     coordsOfAdjacentBond ((a, b, _), (coordsA, coordsB)) | a == ind = Just (coordsA, coordsB)
                                                          | b == ind = Just (coordsB, coordsA)
                                                          | otherwise = Nothing
 
-findAdjacent :: CoordList -> Int -> (Coord, Coord)
+findAdjacent :: CoordList e -> Int -> (Coord e, Coord e)
 findAdjacent list ind = (leftNeighbor, rightNeighbor)
   where
     [leftNeighbor, rightNeighbor] = take 2 (findIncidentCoords ind list)

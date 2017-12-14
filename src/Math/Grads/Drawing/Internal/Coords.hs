@@ -4,6 +4,7 @@ module Math.Grads.Drawing.Internal.Coords
   , Link
   , bondLength
   , coordListForDrawing
+  , coordListToMap
   , findBond
   , findBondInd
   , tupleToList
@@ -17,9 +18,9 @@ import           Linear.V2                         (V2 (..))
 import           Linear.Vector                     ((^/))
 import           Math.Angem                        (alignmentFunc, d2)
 import           Math.Grads.Algo.Interaction       ((~=))
-import           Math.Grads.Class                  (EdgeList, GraphEdge)
 import           Math.Grads.Drawing.Internal.Utils (Coord, CoordList,
                                                     tupleToList, uV2)
+import           Math.Grads.Graph                  (EdgeList, GraphEdge)
 
 -- (Number of atom, bond) for linked paths
 type Link e = (Int, GraphEdge e)
@@ -28,16 +29,20 @@ bondLength :: Float
 bondLength = 100.0
 
 coordListForDrawing :: Eq e => CoordList e -> Map Int (Float, Float)
-coordListForDrawing coordinates = fromList (helper coordsT [] [])
+coordListForDrawing coordinates = uV2 <$> coordListToMap coordsT
   where
     coordsT = rotateAlongLongestDist coordinates
 
-    helper :: CoordList e -> [Int] -> [(Int, (Float, Float))] -> [(Int, (Float, Float))]
+coordListToMap :: Eq e => CoordList e -> Map Int (V2 Float)
+coordListToMap coordinates = fromList (helper coordinates [] [])
+  where
+
+    helper :: CoordList e -> [Int] -> [(Int, V2 Float)] -> [(Int, V2 Float)]
     helper [] _ res = res
     helper (((a, b, _), (cA, cB)) : xs) taken res | a `elem` taken && b `elem` taken = helper xs taken res
-                                                  | a `elem` taken && b `notElem` taken = helper xs (b : taken) ((b, uV2 cB) : res)
-                                                  | a `notElem` taken && b `elem` taken = helper xs (a : taken) ((a, uV2 cA) : res)
-                                                  | otherwise = helper xs (a : b : taken) ((a, uV2 cA) : (b, uV2 cB) : res)
+                                                  | a `elem` taken && b `notElem` taken = helper xs (b : taken) ((b, cB) : res)
+                                                  | a `notElem` taken && b `elem` taken = helper xs (a : taken) ((a, cA) : res)
+                                                  | otherwise = helper xs (a : b : taken) ((a, cA) : (b, cB) : res)
 
 rotateAlongLongestDist :: CoordList e -> CoordList e
 rotateAlongLongestDist coordinates = res

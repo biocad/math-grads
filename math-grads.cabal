@@ -1,5 +1,5 @@
 name:                math-grads
-version:             0.0.0.2
+version:             0.0.0.3
 homepage:            https://github.com/biocad/math-grads#readme
 license:             BSD3
 license-file:        LICENSE
@@ -17,12 +17,15 @@ library
                      , Math.Grads.Algo.Interaction
                      , Math.Grads.Algo.Paths
                      , Math.Grads.Algo.Traversals
-                     , Math.Grads.Class
+                     , Math.Grads.Drawing.Coords
+                     , Math.Grads.Graph
                      , Math.Grads.GenericGraph
                      , Math.Grads.Utils
   other-modules:       Math.Grads.Drawing.Internal.Coords
                      , Math.Grads.Drawing.Internal.Cycles
                      , Math.Grads.Drawing.Internal.CyclesPathsAlignment
+                     , Math.Grads.Drawing.Internal.Paths
+                     , Math.Grads.Drawing.Internal.Sampling
                      , Math.Grads.Drawing.Internal.Utils
   build-depends:       base >= 4.7 && < 5
                      , array

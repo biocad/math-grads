@@ -14,8 +14,8 @@ import           Data.Maybe                  (isJust)
 
 import           Math.Grads.Algo.Interaction (edgeListToMap, getVertexAdjacent,
                                               matchEdges, sortBondList)
-import           Math.Grads.Class            (EdgeList, Graph (..))
 import           Math.Grads.GenericGraph     (GenericGraph)
+import           Math.Grads.Graph            (EdgeList, Graph (..))
 import           Math.Grads.Utils            (nub, subsets, uniter)
 
 -- Finds all vertices that have only one neighbor

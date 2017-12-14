@@ -19,7 +19,7 @@ import           Data.List                   (unfoldr)
 import           Linear.V2                   (V2 (..))
 import           Math.Angem                  (reflectPoint)
 import           Math.Grads.Algo.Interaction (isIncident)
-import           Math.Grads.Class            (GraphEdge)
+import           Math.Grads.Graph            (GraphEdge)
 import           System.Random               (StdGen, randomR)
 
 type CoordList e = [Coord e]

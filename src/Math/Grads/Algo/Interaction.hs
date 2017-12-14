@@ -24,7 +24,7 @@ import           Data.Map         (Map)
 import qualified Data.Map         as M
 import           Data.Maybe       (fromJust, isJust)
 
-import           Math.Grads.Class (EdgeList, GraphEdge, edgeType)
+import           Math.Grads.Graph (EdgeList, GraphEdge, edgeType)
 import           Math.Grads.Utils (nub)
 
 (~=) :: GraphEdge e -> GraphEdge e -> Bool

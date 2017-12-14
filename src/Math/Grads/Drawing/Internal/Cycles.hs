@@ -25,10 +25,6 @@ import           Math.Grads.Algo.Interaction                      (getEnds,
                                                                    getIndices)
 import           Math.Grads.Algo.Paths                            (findBeginnings)
 import           Math.Grads.Algo.Traversals                       (dfsCycle)
-import           Math.Grads.Class                                 (EdgeList,
-                                                                   GraphEdge,
-                                                                   fromList,
-                                                                   vCount)
 import           Math.Grads.Drawing.Internal.Coords               (Link,
                                                                    bondLength)
 import           Math.Grads.Drawing.Internal.CyclesPathsAlignment (bondsToAlignTo,
@@ -44,10 +40,14 @@ import           Math.Grads.Drawing.Internal.Utils                (Coord,
                                                                    tupleToList)
 import           Math.Grads.GenericGraph                          (gAdjacency,
                                                                    gIndex)
+import           Math.Grads.Graph                                 (EdgeList,
+                                                                   GraphEdge,
+                                                                   fromList,
+                                                                   vCount)
 import           Math.Grads.Utils                                 (uniter)
 
 -- Calculates coordinates of system of cycles and coordinates of bonds that are adjacent to it
-getCoordsOfGlobalCycle :: Eq e => [CoordList e] -> EdgeList e -> Maybe (CoordList e, [EdgeList e])
+getCoordsOfGlobalCycle :: Eq e => [CoordList e] -> EdgeList e -> Maybe (CoordList e)
 getCoordsOfGlobalCycle paths globalCycle = if not (null localCycles) && isJust alignedM then Just res
                                            else Nothing
   where
@@ -59,7 +59,7 @@ getCoordsOfGlobalCycle paths globalCycle = if not (null localCycles) && isJust a
     aligned = fromJust alignedM
     cleanAligned = cleanCoordList (concat aligned) []
 
-    res = (restoreEndsForCycle cleanAligned paths aligned, localCycles)
+    res = restoreEndsForCycle cleanAligned paths aligned
 
 getCoordsOfLocalCycle :: EdgeList e -> CoordList e
 getCoordsOfLocalCycle thisCycle = matchBonds thisCycle (getCoordsOfPolygon (length thisCycle))
