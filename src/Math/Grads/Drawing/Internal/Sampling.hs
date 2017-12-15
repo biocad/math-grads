@@ -3,10 +3,10 @@
 module Math.Grads.Drawing.Internal.Sampling (Constraint (..), bestSample) where
 
 import           Data.List                          (delete, find)
-import           Data.Map.Strict                    (Map, (!))
+import           Data.Map.Strict                    ((!))
 import           Data.Maybe                         (fromJust)
 import           Linear.V2                          (V2)
-import           Math.Angem                         (areIntersected, d2, eqV2)
+import           Math.Angem                         (areIntersected, eqV2)
 import           Math.Grads.Algo.Traversals         (dfs)
 import           Math.Grads.Drawing.Internal.Coords (coordListToMap)
 import           Math.Grads.Drawing.Internal.Utils  (Coord, CoordList,

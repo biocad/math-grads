@@ -8,9 +8,15 @@ import           Math.Grads.Graph          (fromList)
 import           System.Random             (mkStdGen)
 import           Test.Hspec
 
+pathToGraphs :: FilePath
+pathToGraphs = "data/Graphs.txt"
+
 testMap :: IO (Map String (GenericGraph Int Int, Map Int (Float, Float)))
 testMap = do
-    forMap <- fmap (fmap ((\(x : y : z : _) -> (x, (fromList (read y), read z))) . words) . lines) (readFile "data/Coords.txt")
+    graphsInLines <- lines <$> readFile pathToGraphs
+    let graphsInWords = fmap words graphsInLines
+
+    let forMap = fmap (\(x : y : z : _) -> (x, (fromList (read y), read z))) graphsInWords
     return (M.fromList forMap)
 
 testDrawing :: SpecWith ()
