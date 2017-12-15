@@ -2,6 +2,7 @@ module Math.Grads.Graph
   ( EdgeList
   , Graph (..)
   , GraphEdge
+  , changeIndsEdge
   , edgeType
   ) where
 
@@ -12,6 +13,9 @@ type EdgeList e = [GraphEdge e]
 
 edgeType :: GraphEdge e -> e
 edgeType (_, _, t) = t
+
+changeIndsEdge :: (Int -> Int) -> GraphEdge e -> GraphEdge e
+changeIndsEdge f (a, b, t) = (f a, f b, t)
 
 class Graph g where
   -- Construct a graph from list of vertices and edges

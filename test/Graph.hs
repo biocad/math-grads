@@ -1,5 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Main where
 
 import           Data.List               (sort)
@@ -38,7 +36,6 @@ opTests = describe "Operations on graphs." $ do
 
 subgraphTests :: Spec
 subgraphTests = describe "Subgraph tests." $ do
-                            -- 0  1  2  3   4  5   6
   let subg = graph `subgraph` [0, 3, 5, 7, 8, 11, 14]
   it "Adjacent to 0." $ subg !> 0 `shouldBe` []
   it "Adjacent to 3." $ subg !. 1 `shouldBe` [(2, 1)]
