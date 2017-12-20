@@ -16,7 +16,7 @@ import           Data.Map.Strict                   (Map, fromList)
 import           Linear.Metric                     (norm)
 import           Linear.V2                         (V2 (..))
 import           Linear.Vector                     ((^/))
-import           Math.Angem                        (alignmentFunc, d2)
+import           Math.Angem                        (alignmentFunc, dist)
 import           Math.Grads.Algo.Interaction       ((~=))
 import           Math.Grads.Drawing.Internal.Utils (Coord, CoordList,
                                                     tupleToList, uV2)
@@ -60,7 +60,7 @@ getFloats coords = foldl (\x y -> x ++ tupleToList y) [] (fmap snd coords)
 findTwoMostDistantPoints :: [V2 Float] -> (V2 Float, V2 Float)
 findTwoMostDistantPoints points = res
   where
-    res = head (sortOn (\(a, b) -> -(d2 a b)) (allPairs points))
+    res = head (sortOn (\(a, b) -> -(dist a b)) (allPairs points))
 
     allPairs :: [a] -> [(a, a)]
     allPairs []       = []
