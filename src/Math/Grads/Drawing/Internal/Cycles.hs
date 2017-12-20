@@ -19,7 +19,7 @@ import           Linear.Vector                                    ((*^), (^/))
 import qualified Data.Array                                       as A
 import qualified Data.Map.Strict                                  as M
 import           Math.Angem                                       (alignmentFunc,
-                                                                   d2)
+                                                                   dist)
 import           Math.Grads.Algo.Cycles                           (findLocalCycles)
 import           Math.Grads.Algo.Interaction                      (getEnds,
                                                                    getIndices)
@@ -140,7 +140,7 @@ reflectIfIntersects thisCycle allCycles (coordA, coordB) = if intersects then re
   where
     thisCentroid = centroid thisCycle
     otherCentroids = centroid <$> allCycles
-    intersects = any (\x -> sqrt (d2 x thisCentroid) <= bondLength) otherCentroids
+    intersects = any (\x -> dist x thisCentroid <= bondLength) otherCentroids
 
 correctLeftMatches :: forall e. Eq e => [Coord e] -> CoordList e -> CoordList e -> CoordList e
 correctLeftMatches [] thisCycle _ = thisCycle
