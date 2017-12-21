@@ -1,10 +1,12 @@
 module Math.Grads.Drawing.Coords
-  ( Constraint (..)
+  ( BondFixator
+  , Constraint (..)
   , CoordList
   , CoordMap
   , bondLength
   , getCoordsForGraph
   , getCoordsForGraphCons
+  , getCoordsForGraphFix
   ) where
 
 import           Control.Monad                                    (join)
