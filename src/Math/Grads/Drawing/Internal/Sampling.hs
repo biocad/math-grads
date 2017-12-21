@@ -1,14 +1,22 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Math.Grads.Drawing.Internal.Sampling (Constraint (..), bestSample) where
+module Math.Grads.Drawing.Internal.Sampling
+  ( BondFixator
+  , Constraint (..)
+  , bestSample
+  , defBondFixator
+  ) where
 
-import           Data.List                          (delete, find)
+import           Data.List                          (delete, find, (\\))
 import           Data.Map.Strict                    ((!))
 import           Data.Maybe                         (fromJust)
 import           Linear.V2                          (V2)
 import           Math.Angem                         (areIntersected, eqV2)
 import           Math.Grads.Algo.Traversals         (dfs)
-import           Math.Grads.Drawing.Internal.Coords (coordListToMap)
+import           Math.Grads.Drawing.Internal.Coords (CoordMap,
+                                                     coordListForDrawing,
+                                                     coordListToMap,
+                                                     coordMapToCoordList)
 import           Math.Grads.Drawing.Internal.Utils  (Coord, CoordList,
                                                      randomVectors, reflectBond)
 import           Math.Grads.Graph                   (EdgeList, GraphEdge)
@@ -17,16 +25,25 @@ import           System.Random                      (StdGen)
 data Constraint = VPair { vPair :: (Int -> V2 Float) -> Bool
                         }
 
+type BondFixator e = CoordMap -> (EdgeList e, CoordMap)
+
+defBondFixator :: BondFixator e
+defBondFixator = ((,) [])
+
 -- Find conformation with minimal number of intersections
-bestSample :: Eq e => StdGen -> [Constraint] -> EdgeList e -> CoordList e -> Maybe (CoordList e)
-bestSample stdGen constraints bondsOfPaths coords = if findIntersections constraints resSample /= 0 then Nothing
-                                                    else Just resSample
+bestSample :: Eq e => StdGen -> BondFixator e -> [Constraint] -> EdgeList e -> CoordList e -> Maybe (CoordList e)
+bestSample stdGen bondFixer constraints bondsOfPaths coords = res
   where
-    samples = generateSamples stdGen coords bondsOfPaths
+    (fixedBonds, coordsChangedMap) = bondFixer (coordListForDrawing coords)
+    coordsChanged = coordMapToCoordList coordsChangedMap (fmap fst coords)
+    samples = generateSamples stdGen coordsChanged (bondsOfPaths \\ fixedBonds)
     curInt = findIntersections constraints (head samples)
 
     resSample = if curInt == 0 then head samples
                 else minInterSample constraints (tail samples) (head samples) curInt
+
+    res = if findIntersections constraints resSample /= 0 then Nothing
+          else Just resSample
 
 minInterSample :: Eq e => [Constraint] -> [CoordList e] -> CoordList e -> Int -> CoordList e
 minInterSample _ [] prev _ = prev

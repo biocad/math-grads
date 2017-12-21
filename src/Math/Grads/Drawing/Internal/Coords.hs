@@ -1,10 +1,12 @@
 module Math.Grads.Drawing.Internal.Coords
   ( Coord
   , CoordList
+  , CoordMap
   , Link
   , bondLength
   , coordListForDrawing
   , coordListToMap
+  , coordMapToCoordList
   , findBond
   , findBondInd
   , tupleToList
@@ -12,23 +14,32 @@ module Math.Grads.Drawing.Internal.Coords
 
 import           Control.Arrow                     ((***))
 import           Data.List                         (find, findIndex, sortOn)
-import           Data.Map.Strict                   (Map, fromList)
+import           Data.Map.Strict                   (Map, fromList, (!))
 import           Linear.Metric                     (norm)
 import           Linear.V2                         (V2 (..))
 import           Linear.Vector                     ((^/))
 import           Math.Angem                        (alignmentFunc, dist)
 import           Math.Grads.Algo.Interaction       ((~=))
-import           Math.Grads.Drawing.Internal.Utils (Coord, CoordList,
+import           Math.Grads.Drawing.Internal.Utils (Coord, CoordList, pairToV2,
                                                     tupleToList, uV2)
 import           Math.Grads.Graph                  (EdgeList, GraphEdge)
 
--- (Number of atom, bond) for linked paths
+-- (Number of vertex, edge) for linked paths
 type Link e = (Int, GraphEdge e)
+
+-- Map that matches indexes of vertices to coordinates of these vertices
+type CoordMap = Map Int (Float, Float)
 
 bondLength :: Float
 bondLength = 100.0
 
-coordListForDrawing :: Eq e => CoordList e -> Map Int (Float, Float)
+coordMapToCoordList :: CoordMap -> EdgeList e -> CoordList e
+coordMapToCoordList coordMap = fmap (\bond@(a, b, _) -> (bond, (toV2Coord a, toV2Coord b)))
+  where
+    toV2Coord :: Int -> V2 Float
+    toV2Coord = pairToV2 . (coordMap !)
+
+coordListForDrawing :: Eq e => CoordList e -> CoordMap
 coordListForDrawing coordinates = uV2 <$> coordListToMap coordsT
   where
     coordsT = rotateAlongLongestDist coordinates
