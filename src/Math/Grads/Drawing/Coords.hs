@@ -1,12 +1,14 @@
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 module Math.Grads.Drawing.Coords
   ( BondFixator
   , Constraint (..)
   , CoordList
   , CoordMap
+  , Drawable (..)
   , bondLength
   , getCoordsForGraph
-  , getCoordsForGraphCons
-  , getCoordsForGraphFix
   ) where
 
 import           Control.Monad                                    (join)
@@ -20,21 +22,15 @@ import           Math.Grads.Drawing.Internal.Cycles               (getCoordsOfGl
 import           Math.Grads.Drawing.Internal.CyclesPathsAlignment (alignCyclesAndPaths)
 import           Math.Grads.Drawing.Internal.Paths                (findPaths, getCoordsOfPath)
 import           Math.Grads.Drawing.Internal.Sampling             (BondFixator, Constraint (..),
-                                                                   bestSample,
-                                                                   defBondFixator)
+                                                                   bestSample)
 import           Math.Grads.GenericGraph                          (GenericGraph)
 import           Math.Grads.Graph                                 (EdgeList,
+                                                                   Graph,
                                                                    toList)
 import           System.Random                                    (StdGen)
 
-getCoordsForGraph :: (Ord v, Ord e, Eq e) => StdGen -> GenericGraph v e -> Maybe CoordMap
-getCoordsForGraph = getCoordsForGraphCons []
-
-getCoordsForGraphCons :: (Ord v, Ord e, Eq e) => [Constraint] -> StdGen -> GenericGraph v e -> Maybe CoordMap
-getCoordsForGraphCons = getCoordsForGraphFix defBondFixator
-
-getCoordsForGraphFix :: (Ord v, Ord e, Eq e) => BondFixator e -> [Constraint] -> StdGen -> GenericGraph v e -> Maybe CoordMap
-getCoordsForGraphFix bondFixator constraints stdGen graph = res
+getCoordsForGraph :: (Ord v, Ord e, Eq e, Drawable GenericGraph v e) => StdGen -> GenericGraph v e -> Maybe CoordMap
+getCoordsForGraph stdGen graph = res
   where
     (_, bonds) = toList graph
     (globalCycles, paths) = splitIntoCyclesAndPaths bonds
@@ -43,7 +39,7 @@ getCoordsForGraphFix bondFixator constraints stdGen graph = res
     pathsWithCoords = fmap getCoordsOfPath paths
 
     finalCoords = join (fmap (alignCyclesAndPaths pathsWithCoords) globalCyclesWithCoords)
-    resCoords = join (fmap (bestSample stdGen bondFixator constraints (concat paths)) finalCoords)
+    resCoords = join (fmap (bestSample stdGen (bondFixator graph) (constraints graph) (concat paths)) finalCoords)
 
     res = fmap coordListForDrawing resCoords
 
@@ -53,3 +49,12 @@ splitIntoCyclesAndPaths bonds = (globalCycles, paths)
     globalCycles = findCycles bonds
     forPaths = filter (`notElem` concat globalCycles) bonds
     paths = findPaths forPaths $ concatMap getIndices globalCycles
+
+class Graph g => Drawable g v e where
+  -- Change coordinates and fixate edges that shouldn't take part in sampling
+  bondFixator :: g v e -> BondFixator e
+  bondFixator _ = ((,) [])
+
+  -- List of constraints for molecule
+  constraints :: g v e -> [Constraint]
+  constraints _ = []

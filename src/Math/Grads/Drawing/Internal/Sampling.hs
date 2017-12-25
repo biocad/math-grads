@@ -1,10 +1,10 @@
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
 
 module Math.Grads.Drawing.Internal.Sampling
   ( BondFixator
   , Constraint (..)
   , bestSample
-  , defBondFixator
   ) where
 
 import           Data.List                          (delete, find, (\\))
@@ -27,14 +27,11 @@ data Constraint = VPair { vPair :: (Int -> V2 Float) -> Bool
 
 type BondFixator e = CoordMap -> (EdgeList e, CoordMap)
 
-defBondFixator :: BondFixator e
-defBondFixator = ((,) [])
-
 -- Find conformation with minimal number of intersections
 bestSample :: Eq e => StdGen -> BondFixator e -> [Constraint] -> EdgeList e -> CoordList e -> Maybe (CoordList e)
-bestSample stdGen bondFixer constraints bondsOfPaths coords = res
+bestSample stdGen bondFixator constraints bondsOfPaths coords = res
   where
-    (fixedBonds, coordsChangedMap) = bondFixer (coordListForDrawing coords)
+    (fixedBonds, coordsChangedMap) = bondFixator (coordListForDrawing coords)
     coordsChanged = coordMapToCoordList coordsChangedMap (fmap fst coords)
     samples = generateSamples stdGen coordsChanged (bondsOfPaths \\ fixedBonds)
     curInt = findIntersections constraints (head samples)

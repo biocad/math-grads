@@ -1,11 +1,14 @@
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
 
 module Math.Grads.Algo.Isomorphism
   ( EComparator, VComparator
-  , getIsoGraph, getIsoGraphWithComp
-  , getMultiIsoGraph, getMultiIsoGraphWithComp
-  , isIso, isIsoWithComp
-  , isIsoSub, isIsoSubWithComp
+  , GComparable (..)
+  , getIsoGraph
+  , getMultiIsoGraph
+  , isIso
+  , isIsoSub
   ) where
 
 import           Control.Arrow           (second, (&&&), (***))
@@ -20,8 +23,8 @@ import           Data.Maybe              (isJust, listToMaybe)
 import           Data.Tuple              (swap)
 import qualified Data.Vector             as V
 import           Math.Grads.GenericGraph (GenericGraph (..))
-import           Math.Grads.Graph        (changeIndsEdge, fromList, toList,
-                                          vCount, (!.))
+import           Math.Grads.Graph        (Graph, changeIndsEdge, fromList,
+                                          toList, vCount, (!.))
 import           Math.Grads.Utils        (nub)
 
 type GenericGraphIso v e = GenericGraph v e
@@ -32,62 +35,50 @@ type VComparator v1 v2 = v1 -> v2 -> Bool
 -- Function that checks whether we consider two edges of different graphs to be isomorphic
 type EComparator e1 e2 = e1 -> e2 -> Bool
 
+class (Graph g1, Graph g2) => GComparable g1 v1 e1 g2 v2 e2 where
+  vComparator :: g1 v1 e1 -> g2 v2 e2 -> VComparator v1 v2
+
+  eComparator :: g1 v1 e1 -> g2 v2 e2 -> EComparator e1 e2
+
 -- Returns True if the two graphs are equivalent
-isIsoWithComp :: (Ord v1, Ord v2) => VComparator v1 v2
-                                  -> EComparator e1 e2
-                                  -> GenericGraph v1 e1
-                                  -> GenericGraph v2 e2
-                                  -> Bool
-isIsoWithComp vComp eComp queryGraph targetGraph = res
+isIso :: (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2) => GenericGraph v1 e1
+                                                                             -> GenericGraph v2 e2
+                                                                             -> Bool
+isIso queryGraph targetGraph = res
   where
     l1 = vCount queryGraph
     l2 = vCount targetGraph
-    isoSub = isIsoSubWithComp vComp eComp queryGraph targetGraph
+    isoSub = isIsoSub queryGraph targetGraph
 
     res = l1 == l2 && isoSub
 
-isIso :: (Ord v, Eq v, Eq e) => GenericGraph v e -> GenericGraph v e -> Bool
-isIso = isIsoWithComp (==) (==)
-
 -- Returns True if second graph has subgraph isomorphic to first graph
-isIsoSubWithComp :: (Ord v1, Ord v2) => VComparator v1 v2
-                                     -> EComparator e1 e2
-                                     -> GenericGraph v1 e1
-                                     -> GenericGraph v2 e2
-                                     -> Bool
-isIsoSubWithComp vComp eComp queryGraph targetGraph = isJust (getIsoGraphWithComp vComp eComp queryGraph targetGraph)
-
-isIsoSub :: (Ord v, Eq v, Eq e) => GenericGraph v e -> GenericGraph v e -> Bool
-isIsoSub = isIsoSubWithComp (==) (==)
+isIsoSub :: (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2) => GenericGraph v1 e1
+                                                                                -> GenericGraph v2 e2
+                                                                                -> Bool
+isIsoSub queryGraph targetGraph = isJust (getIsoGraph queryGraph targetGraph)
 
 -- Match from vertices of query graph to vertices of target graph
-getIsoGraphWithComp :: (Ord v1, Ord v2) => VComparator v1 v2
-                                        -> EComparator e1 e2
-                                        -> GenericGraph v1 e1
-                                        -> GenericGraph v2 e2
-                                        -> Maybe (Map Int Int)
-getIsoGraphWithComp vComp eComp queryGraph targetGraph = listToMaybe matches
+getIsoGraph :: (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2) => GenericGraph v1 e1
+                                                                                   -> GenericGraph v2 e2
+                                                                                   -> Maybe (Map Int Int)
+getIsoGraph queryGraph targetGraph = listToMaybe matches
   where
-    matches = getMultiIsoGraphWithComp vComp eComp queryGraph targetGraph
+    matches = getMultiIsoGraph queryGraph targetGraph
 
-getIsoGraph :: (Ord v, Eq v, Eq e) => GenericGraph v e -> GenericGraph v e -> Maybe (Map Int Int)
-getIsoGraph = getIsoGraphWithComp (==) (==)
-
-getMultiIsoGraphWithComp :: (Ord v1, Ord v2) => VComparator v1 v2
-                                             -> EComparator e1 e2
-                                             -> GenericGraph v1 e1
-                                             -> GenericGraph v2 e2
-                                             -> [Map Int Int]
-getMultiIsoGraphWithComp vComp eComp queryGraph' targetGraph' = matches
+getMultiIsoGraph ::   (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2) => GenericGraph v1 e1
+                                                                                          -> GenericGraph v2 e2
+                                                                                          -> [Map Int Int]
+getMultiIsoGraph queryGraph' targetGraph' = matches
   where
     (queryGraph, fromIsoToOldQ) = second inverseMap (graphToGraphIso queryGraph')
     (targetGraph, fromIsoToOldT) = second inverseMap (graphToGraphIso targetGraph')
 
+    vComp = vComparator queryGraph targetGraph
+    eComp = eComparator queryGraph targetGraph
+
     isos = isoGraph vComp eComp queryGraph targetGraph
     matches = fmap (\x -> getMatchMap x fromIsoToOldQ fromIsoToOldT) isos
-
-getMultiIsoGraph :: (Ord v, Eq v, Eq e) => GenericGraph v e -> GenericGraph v e -> [Map Int Int]
-getMultiIsoGraph = getMultiIsoGraphWithComp (==) (==)
 
 inverseMap :: Map Int Int -> Map Int Int
 inverseMap = M.fromList . (swap <$>) . M.toList

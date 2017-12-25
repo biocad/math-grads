@@ -1,11 +1,18 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 module Main where
 
 import           Data.Map.Strict             (Map)
 import qualified Data.Map.Strict             as M
-import           Math.Grads.Algo.Isomorphism (isIsoSub)
+import           Math.Grads.Algo.Isomorphism (GComparable (..), isIsoSub)
 import           Math.Grads.GenericGraph     (GenericGraph)
 import           Math.Grads.Graph            (fromList)
 import           Test.Hspec
+
+instance GComparable GenericGraph Int Int GenericGraph Int Int where
+  vComparator _ _ = (==)
+
+  eComparator _ _ = (==)
 
 pathToGraphs :: FilePath
 pathToGraphs = "data/Graphs.txt"
