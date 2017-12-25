@@ -2,11 +2,11 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module Math.Grads.Drawing.Coords
-  ( BondFixator
-  , Constraint (..)
+  ( Constraint (..)
   , CoordList
   , CoordMap
   , Drawable (..)
+  , EdgeFixator
   , bondLength
   , getCoordsForGraph
   ) where
@@ -21,7 +21,8 @@ import           Math.Grads.Drawing.Internal.Coords               (CoordList,
 import           Math.Grads.Drawing.Internal.Cycles               (getCoordsOfGlobalCycle)
 import           Math.Grads.Drawing.Internal.CyclesPathsAlignment (alignCyclesAndPaths)
 import           Math.Grads.Drawing.Internal.Paths                (findPaths, getCoordsOfPath)
-import           Math.Grads.Drawing.Internal.Sampling             (BondFixator, Constraint (..),
+import           Math.Grads.Drawing.Internal.Sampling             (Constraint (..),
+                                                                   EdgeFixator,
                                                                    bestSample)
 import           Math.Grads.GenericGraph                          (GenericGraph)
 import           Math.Grads.Graph                                 (EdgeList,
@@ -39,7 +40,7 @@ getCoordsForGraph stdGen graph = res
     pathsWithCoords = fmap getCoordsOfPath paths
 
     finalCoords = join (fmap (alignCyclesAndPaths pathsWithCoords) globalCyclesWithCoords)
-    resCoords = join (fmap (bestSample stdGen (bondFixator graph) (constraints graph) (concat paths)) finalCoords)
+    resCoords = join (fmap (bestSample stdGen (edgeFixator graph) (constraints graph) (concat paths)) finalCoords)
 
     res = fmap coordListForDrawing resCoords
 
@@ -52,8 +53,8 @@ splitIntoCyclesAndPaths bonds = (globalCycles, paths)
 
 class Graph g => Drawable g v e where
   -- Change coordinates and fixate edges that shouldn't take part in sampling
-  bondFixator :: g v e -> BondFixator e
-  bondFixator _ = ((,) [])
+  edgeFixator :: g v e -> EdgeFixator e
+  edgeFixator _ = (,) []
 
   -- List of constraints for molecule
   constraints :: g v e -> [Constraint]

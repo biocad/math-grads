@@ -5,8 +5,8 @@
 module Math.Grads.Algo.Isomorphism
   ( EComparator, VComparator
   , GComparable (..)
-  , getIsoGraph
-  , getMultiIsoGraph
+  , getIso
+  , getMultiIso
   , isIso
   , isIsoSub
   ) where
@@ -56,20 +56,20 @@ isIso queryGraph targetGraph = res
 isIsoSub :: (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2) => GenericGraph v1 e1
                                                                                 -> GenericGraph v2 e2
                                                                                 -> Bool
-isIsoSub queryGraph targetGraph = isJust (getIsoGraph queryGraph targetGraph)
+isIsoSub queryGraph targetGraph = isJust (getIso queryGraph targetGraph)
 
 -- Match from vertices of query graph to vertices of target graph
-getIsoGraph :: (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2) => GenericGraph v1 e1
-                                                                                   -> GenericGraph v2 e2
-                                                                                   -> Maybe (Map Int Int)
-getIsoGraph queryGraph targetGraph = listToMaybe matches
+getIso :: (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2) => GenericGraph v1 e1
+                                                                              -> GenericGraph v2 e2
+                                                                              -> Maybe (Map Int Int)
+getIso queryGraph targetGraph = listToMaybe matches
   where
-    matches = getMultiIsoGraph queryGraph targetGraph
+    matches = getMultiIso queryGraph targetGraph
 
-getMultiIsoGraph ::   (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2) => GenericGraph v1 e1
-                                                                                          -> GenericGraph v2 e2
-                                                                                          -> [Map Int Int]
-getMultiIsoGraph queryGraph' targetGraph' = matches
+getMultiIso ::   (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2) => GenericGraph v1 e1
+                                                                                     -> GenericGraph v2 e2
+                                                                                     -> [Map Int Int]
+getMultiIso queryGraph' targetGraph' = matches
   where
     (queryGraph, fromIsoToOldQ) = second inverseMap (graphToGraphIso queryGraph')
     (targetGraph, fromIsoToOldT) = second inverseMap (graphToGraphIso targetGraph')
