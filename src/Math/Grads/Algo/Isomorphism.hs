@@ -27,10 +27,10 @@ import           Math.Grads.Graph        (Graph, changeIndsEdge, fromList,
                                           toList, vCount, (!.))
 import           Math.Grads.Utils        (nub)
 
-type GenericGraphIso v e = GenericGraph v e
+type GenericGraphIso v e = GenericGraph Int e
 
--- Function that checks whether we consider two vertices of different graphs to be isomorphic
-type VComparator v1 v2 = v1 -> v2 -> Bool
+-- Function that checks whether we consider two vertices (considering index of vertice) of different graphs to be isomorphic
+type VComparator v1 v2 = Int -> Int -> Bool
 
 -- Function that checks whether we consider two edges of different graphs to be isomorphic
 type EComparator e1 e2 = e1 -> e2 -> Bool
@@ -71,11 +71,11 @@ getMultiIso ::   (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2
                                                                                      -> [Map Int Int]
 getMultiIso queryGraph' targetGraph' = matches
   where
-    (queryGraph, fromIsoToOldQ) = second inverseMap (graphToGraphIso queryGraph')
-    (targetGraph, fromIsoToOldT) = second inverseMap (graphToGraphIso targetGraph')
+    ((queryGraph, queryGraphWI), fromIsoToOldQ) = second inverseMap (graphToGraphIso queryGraph')
+    ((targetGraph, targetGraphWI), fromIsoToOldT) = second inverseMap (graphToGraphIso targetGraph')
 
-    vComp = vComparator queryGraph targetGraph
-    eComp = eComparator queryGraph targetGraph
+    vComp = vComparator queryGraphWI targetGraphWI
+    eComp = eComparator queryGraphWI targetGraphWI
 
     isos = isoGraph vComp eComp queryGraph targetGraph
     matches = fmap (\x -> getMatchMap x fromIsoToOldQ fromIsoToOldT) isos
@@ -148,7 +148,7 @@ uniqueSeq maps = res
     res = any (\x -> length x == length (nub x)) seqs
 
 -- Converts input graph into graph in which vertices with most amount of edges have lowest indices
-graphToGraphIso :: (Ord v) => GenericGraph v e -> (GenericGraphIso v e, M.Map Int Int)
+graphToGraphIso :: (Ord v) => GenericGraph v e -> ((GenericGraphIso v e, GenericGraph v e), M.Map Int Int)
 graphToGraphIso graph = res
   where
     (vertices, edges) = toList graph
@@ -161,9 +161,10 @@ graphToGraphIso graph = res
     sortedV = fmap (vArr A.!) sortedInds
     changedEdges = fmap (changeIndsEdge (changesMap M.!)) edges
 
-    forGraph = (sortedV, changedEdges)
+    forGraphWI = (sortedV, changedEdges)
+    forGraph = ([0.. length sortedV - 1], changedEdges)
 
-    res = (fromList forGraph, changesMap)
+    res = ((fromList forGraph, fromList forGraphWI), changesMap)
 
 -- Ullman's subgraph isomorphism algorithm itself
 recurse :: EComparator e1 e2 -> GenericGraphIso v1 e1
