@@ -1,18 +1,22 @@
 module Math.Grads.Algo.Cycles
   ( findCycles
   , findLocalCycles
+  , getCyclic
   , isEdgeInCycle
   ) where
 
 import           Control.Monad.State         (State, runState)
 import           Control.Monad.State.Class   (get, modify)
 import           Data.List                   (partition, sort, union, (\\))
-
+import           Data.Set                    (Set)
+import qualified Data.Set                    as S (empty, fromList, insert,
+                                                   member)
 import           Math.Grads.Algo.Interaction (getEnds, getIndices, getOtherEnd,
                                               getVertexIncident, haveSharedEdge)
 import           Math.Grads.Algo.Paths       (dfsAllPaths)
 import           Math.Grads.Algo.Traversals  (dfsSt)
-import           Math.Grads.Graph            (EdgeList, GraphEdge)
+import           Math.Grads.GenericGraph     (GenericGraph, safeIdx)
+import           Math.Grads.Graph            (EdgeList, GraphEdge, vCount)
 
 -- | Takes adjacency list and finds non-redundant set of simple cycles
 -- | Cycles sharing in common one edge are considered to be one cycle
@@ -91,3 +95,30 @@ helperFilter [] ready = ready
 helperFilter (x:xs) ready = if exists x ready then helperFilter xs ready else helperFilter xs (x:ready)
   where
     exists a1 = any (\x' -> length a1 == length x' && all (\(a, b, t) -> (a, b, t) `elem` x' || (b, a, t) `elem` x') a1)
+
+-- Checks whether or not given atom belongs to any cycle. This information is used in SMILES construction.
+-- If an atom belongs to a cycle and has double or triple bond, depth-first search will branch to it.
+isCyclic :: GenericGraph v e -> Int -> Int -> (Bool, Set Int) -> Int -> (Bool, Set Int)
+isCyclic graph target previous (result, visited) current | result = (result, visited)
+                                                         | (previous /= (-1)) && (current == target) = (True, visited)
+                                                         | current `S.member` visited = (result, visited)
+                                                         | otherwise = foldl foldFunc (result, updatedVis) next
+  where
+    next :: [Int]
+    next = filter (/= previous) $ graph `safeIdx` current
+
+    updatedVis :: Set Int
+    updatedVis = current `S.insert` visited
+
+    foldFunc :: (Bool, Set Int) -> Int -> (Bool, Set Int)
+    foldFunc = isCyclic graph target current
+
+-- Returns the set of all atoms which belong to any cycle.
+getCyclic :: GenericGraph v e -> Set Int
+getCyclic graph = S.fromList . map fst . filter snd $ zip indices cyclic
+  where
+    indices :: [Int]
+    indices = [0 .. vCount graph - 1]
+
+    cyclic :: [Bool]
+    cyclic = map (\ix -> fst $ isCyclic graph ix (-1) (False, S.empty) ix) indices
