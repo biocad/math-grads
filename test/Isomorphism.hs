@@ -1,16 +1,18 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module Main where
 
+import qualified Data.Array                  as A
 import           Data.Map.Strict             (Map)
 import qualified Data.Map.Strict             as M
 import           Math.Grads.Algo.Isomorphism (GComparable (..), isIsoSub)
-import           Math.Grads.GenericGraph     (GenericGraph)
-import           Math.Grads.Graph            (fromList)
+import           Math.Grads.GenericGraph     (GenericGraph, gIndex)
+import           Math.Grads.Graph            (edgeType, fromList, toList)
 import           Test.Hspec
 
 instance GComparable GenericGraph Int Int GenericGraph Int Int where
-  vComparator _ _ = (==)
+  vComparator g1 g2 ind1 ind2 = gIndex g1 A.! ind1 == gIndex g2 A.! ind2
 
   eComparator _ _ = (==)
 

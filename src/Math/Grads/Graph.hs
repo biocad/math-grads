@@ -3,6 +3,7 @@ module Math.Grads.Graph
   , Graph (..)
   , GraphEdge
   , changeIndsEdge
+  , changeTypeEdge
   , edgeType
   ) where
 
@@ -13,6 +14,9 @@ type EdgeList e = [GraphEdge e]
 
 edgeType :: GraphEdge e -> e
 edgeType (_, _, t) = t
+
+changeTypeEdge :: (e1 -> e2) -> GraphEdge e1 -> GraphEdge e2
+changeTypeEdge f (a, b, t) = (a, b, f t)
 
 changeIndsEdge :: (Int -> Int) -> GraphEdge e -> GraphEdge e
 changeIndsEdge f (a, b, t) = (f a, f b, t)

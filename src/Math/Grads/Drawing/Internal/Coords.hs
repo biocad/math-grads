@@ -7,19 +7,16 @@ module Math.Grads.Drawing.Internal.Coords
   , coordListForDrawing
   , coordListToMap
   , coordMapToCoordList
-  , findBond
-  , findBondInd
   , tupleToList
   ) where
 
 import           Control.Arrow                     ((***))
-import           Data.List                         (find, findIndex, sortOn)
+import           Data.List                         (sortOn)
 import           Data.Map.Strict                   (Map, fromList, (!))
 import           Linear.Metric                     (norm)
 import           Linear.V2                         (V2 (..))
 import           Linear.Vector                     ((^/))
 import           Math.Angem                        (alignmentFunc, dist)
-import           Math.Grads.Algo.Interaction       ((~=))
 import           Math.Grads.Drawing.Internal.Utils (Coord, CoordList, pairToV2,
                                                     tupleToList, uV2)
 import           Math.Grads.Graph                  (EdgeList, GraphEdge)
@@ -76,19 +73,3 @@ findTwoMostDistantPoints points = res
     allPairs :: [a] -> [(a, a)]
     allPairs []       = []
     allPairs (x : xs) = fmap (\x' -> (x, x')) xs ++ allPairs xs
-
-findBondInd :: EdgeList e -> Int -> Int -> Maybe Int
-findBondInd bonds a b = found
-  where
-    leftA = min a b
-    rightB = max a b
-
-    found = findIndex (~= (leftA, rightB, undefined)) bonds
-
-findBond :: CoordList e -> Int -> Int -> Maybe (Coord e)
-findBond coords a b = found
-  where
-    leftA = min a b
-    rightB = max a b
-
-    found = find (\((a', b', _), _) -> a' == leftA && b' == rightB) coords
