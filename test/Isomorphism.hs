@@ -27,6 +27,15 @@ testMap = do
     let forMap = fmap (\(x : y : _) -> (x, fromList (read y))) graphsInWords
     return (M.fromList forMap)
 
+bigSubGraph :: GenericGraph Int Int
+bigSubGraph = fromList ( [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                       , [ (0, 1, 1), (0, 26, 1), (1, 2, 1), (2, 3, 1), (3, 4, 1), (3, 25, 1), (4, 5, 1), (4, 11, 1), (5, 6, 1)
+                         , (6, 7, 1), (7, 8, 1), (7, 10, 1), (8, 9, 1), (9, 10, 1), (11, 12, 1), (11, 24, 1), (12, 13, 1), (13, 14, 1)
+                         , (13, 18, 1), (14, 15, 1), (15, 16, 1), (16, 17, 1), (17, 18, 1), (18, 19, 1), (19, 20, 1), (19, 24, 1)
+                         , (20, 21, 1), (21, 22, 1), (22, 23, 1), (23, 24, 1), (25, 26, 1)
+                         ]
+                       )
+
 pathGraph :: GenericGraph Int Int
 pathGraph = fromList ([0, 0, 0, 0, 0, 0, 0], [(0, 1, 1), (0, 2, 1), (0, 3, 1), (0, 4, 1), (4, 5, 1), (4, 6, 1)])
 
@@ -73,6 +82,9 @@ testIsIsoSub = describe "Check whether subgraph isomorphism algorithm is working
     it "Cycle and triangle" $ do
         graph <- fmap (M.! "paths_through_conjugated_cycles") testMap
         graph `shouldSatisfy` isIsoSub cycleAndTriangle
+    it "Big graph" $ do
+        graph <- fmap (M.! "takes_long_if_done_wrong") testMap
+        graph `shouldSatisfy` isIsoSub bigSubGraph
     it "Triangle and triangle. No match" $ do
         graph <- fmap (M.! "paths_through_conjugated_cycles") testMap
         graph `shouldNotSatisfy` isIsoSub triangleAndTriangle

@@ -156,7 +156,7 @@ graphToGraphIso graph = res
 
     indsWithNCount = fmap (id &&& (length . (graph !.))) [0.. length vertices - 1]
     sortedInds = fst <$> sortOn (\x -> - (snd x)) indsWithNCount
-    changesMap = M.fromList (zip [0..] sortedInds)
+    changesMap = M.fromList (zip sortedInds [0..])
 
     sortedV = fmap (vArr A.!) sortedInds
     changedEdges = fmap (changeIndsEdge (changesMap M.!)) edges
