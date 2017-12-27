@@ -27,10 +27,10 @@ import           Data.Maybe       (fromJust, isJust)
 import           Math.Grads.Graph (EdgeList, GraphEdge, edgeType)
 import           Math.Grads.Utils (nub)
 
-(~=) :: GraphEdge e -> GraphEdge e -> Bool
+(~=) :: GraphEdge e1 -> GraphEdge e2 -> Bool
 (b, e, _) ~= (b', e', _) = (b == b' && e == e') || (b == e' && e == b')
 
-(/~=) :: GraphEdge e -> GraphEdge e -> Bool
+(/~=) :: GraphEdge e1 -> GraphEdge e2 -> Bool
 b1 /~= b2 = not $ b1 ~= b2
 
 -- VERTEX FUNCTIONS
