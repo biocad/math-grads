@@ -53,6 +53,9 @@ testErrors = describe "Check that coordinates for molecules that we can't draw a
     it "Bad conjugated cycle" $ do
         (graph, coords) <- fmap (M.! "bad_conjugated_cycle") testMap
         (roundPair <$>) <$> getCoordsForGraph (mkStdGen 0) graph `shouldBe` Nothing
+    it "Disappearing cycle" $ do
+        (graph, coords) <- fmap (M.! "disappearing_cycle") testMap
+        (roundPair <$>) <$> getCoordsForGraph (mkStdGen 0) graph `shouldBe` Nothing
 
 main :: IO ()
 main = hspec $ do

@@ -12,6 +12,7 @@ module Math.Grads.Drawing.Coords
   ) where
 
 import           Control.Monad                                    (join)
+import           Data.Map.Strict                                  (keys)
 import           Math.Grads.Algo.Cycles                           (findCycles)
 import           Math.Grads.Algo.Interaction                      (getIndices)
 import           Math.Grads.Drawing.Internal.Coords               (CoordList,
@@ -33,7 +34,7 @@ import           System.Random                                    (StdGen)
 getCoordsForGraph :: (Ord v, Ord e, Eq e, Drawable GenericGraph v e) => StdGen -> GenericGraph v e -> Maybe CoordMap
 getCoordsForGraph stdGen graph = res
   where
-    (_, bonds) = toList graph
+    (atoms, bonds) = toList graph
     (globalCycles, paths) = splitIntoCyclesAndPaths bonds
 
     globalCyclesWithCoords = sequence (fmap (getCoordsOfGlobalCycle pathsWithCoords) globalCycles)
@@ -42,7 +43,9 @@ getCoordsForGraph stdGen graph = res
     finalCoords = join (fmap (alignCyclesAndPaths pathsWithCoords) globalCyclesWithCoords)
     resCoords = join (fmap (bestSample stdGen (edgeFixator graph) (constraints graph) (concat paths)) finalCoords)
 
-    res = fmap coordListForDrawing resCoords
+    resMap = fmap coordListForDrawing resCoords
+
+    res = if fmap (length . keys) resMap == pure (length atoms) then resMap else Nothing
 
 splitIntoCyclesAndPaths :: (Ord e, Eq e) => EdgeList e -> ([EdgeList e], [EdgeList e])
 splitIntoCyclesAndPaths bonds = (globalCycles, paths)
