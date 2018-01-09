@@ -1,5 +1,13 @@
 name:                math-grads
-version:             0.1.3.3
+version:             0.1.3.4
+synopsis:            Library containing graph data structures and graph algorithms
+description:         Library containing graph data structures and graph algorithms
+                     .
+                     Graph algorithms:
+                     .
+                       * drawing
+                     .
+                       * isomorphism
 homepage:            https://github.com/biocad/math-grads#readme
 license:             BSD3
 license-file:        LICENSE
