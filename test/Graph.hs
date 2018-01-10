@@ -4,7 +4,7 @@ import           Data.List               (sort)
 import           Math.Grads.GenericGraph (GenericGraph, removeEdges,
                                           removeVertices, subgraph)
 import           Math.Grads.Graph        (fromList, incident, safeIncident,
-                                          toList, (!.), (!>), (?>))
+                                          (!.), (!>), (?>))
 import           Test.Hspec
 
 main :: IO ()

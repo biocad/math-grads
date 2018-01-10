@@ -1,11 +1,11 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Main where
 
 import           Data.Map.Strict           (Map)
 import qualified Data.Map.Strict           as M
-import           Math.Grads.Drawing.Coords (CoordList, Drawable,
-                                            getCoordsForGraph)
+import           Math.Grads.Drawing.Coords (Drawable, getCoordsForGraph)
 import           Math.Grads.GenericGraph   (GenericGraph)
 import           Math.Grads.Graph          (fromList)
 import           System.Random             (mkStdGen)
@@ -48,13 +48,13 @@ testDrawing = describe "Check whether molecules are being drawn correctly." $ do
 testErrors :: SpecWith ()
 testErrors = describe "Check that coordinates for molecules that we can't draw are returned as Nothing." $ do
     it "Too big cycle" $ do
-        (graph, coords) <- fmap (M.! "too_big_cycle") testMap
+        (graph, _) <- fmap (M.! "too_big_cycle") testMap
         (roundPair <$>) <$> getCoordsForGraph (mkStdGen 0) graph `shouldBe` Nothing
     it "Bad conjugated cycle" $ do
-        (graph, coords) <- fmap (M.! "bad_conjugated_cycle") testMap
+        (graph, _) <- fmap (M.! "bad_conjugated_cycle") testMap
         (roundPair <$>) <$> getCoordsForGraph (mkStdGen 0) graph `shouldBe` Nothing
     it "Disappearing cycle" $ do
-        (graph, coords) <- fmap (M.! "disappearing_cycle") testMap
+        (graph, _) <- fmap (M.! "disappearing_cycle") testMap
         (roundPair <$>) <$> getCoordsForGraph (mkStdGen 0) graph `shouldBe` Nothing
 
 main :: IO ()

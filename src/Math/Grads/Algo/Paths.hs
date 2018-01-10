@@ -29,7 +29,6 @@ findBeginnings bonds = fmap fst (filter (\x -> snd x == 1) counters)
 allPathsInGraph :: Ord e => GenericGraph v e -> Int -> [EdgeList e]
 allPathsInGraph molGraph lengthOfPath = helper molGraph atomInds []
   where
-    -- atomInds = keys molGraph
     atomInds = [0 .. (vCount molGraph - 1)]
 
     helper :: Ord e => GenericGraph v e -> [Int] -> [Int] -> [EdgeList e]

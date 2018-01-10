@@ -1,24 +1,21 @@
 module Math.Grads.Algo.Traversals
   ( bfsState
   , dfsCycle
-  , dfsGenericGraph
   , dfsSt
   , dfs
   , getComps) where
 
-import           Control.Arrow               (second, (&&&))
+import           Control.Arrow               ((&&&))
 import           Control.Monad.State         (State, execState)
 import           Control.Monad.State.Class   (get, put)
 import qualified Data.Array                  as A
 import           Data.List                   (findIndex)
 import           Data.Map                    (Map, keys, (!))
-import qualified Data.Map                    as M
 import           Data.Maybe                  (fromJust)
 
 import           Math.Grads.Algo.Interaction (edgeListToMap, getIndices,
                                               getOtherEnd, matchEdges, (~=))
-import           Math.Grads.GenericGraph     (GenericGraph, gAdjacency, gIndex,
-                                              subgraph)
+import           Math.Grads.GenericGraph     (GenericGraph, gIndex, subgraph)
 import           Math.Grads.Graph            (EdgeList, Graph (..))
 import           Math.Grads.Utils            (nub)
 
@@ -78,26 +75,6 @@ dfsCycle _ [] visited = visited
 dfsCycle graph (current:toVisit) visited | current `elem` visited = dfsCycle graph toVisit visited
                                          | otherwise = dfsCycle graph ((graph A.! current) ++ toVisit) (current:visited)
 
-dfsGenericGraph :: GenericGraph a b -> [[Int]]
-dfsGenericGraph gr = dfsGenHelper vanillaGraph (A.indices adjArr) []
-  where
-    adjArr = gAdjacency gr
-    vanillaGraph = M.fromList (second (fst <$>) <$> A.assocs adjArr)
-
-dfsGenHelper :: Map Int [Int] -> [Int] -> [Int] -> [[Int]]
-dfsGenHelper _ [] _ = []
-dfsGenHelper graph (x : xs) taken = if x `elem` taken then dfsGenHelper graph xs taken
-                                     else newComp : dfsGenHelper graph xs (taken ++ newComp)
-  where
-    newComp = dfsGenHelper' graph x
-
-dfsGenHelper' :: Map Int [Int] -> Int -> [Int]
-dfsGenHelper' graph ind = component
-  where
-    dfsRes = dfs' graph [ind] [] [(ind, ind)]
-    listOfInds = concatMap (\(x, y) -> [x, y]) dfsRes
-    component = nub listOfInds
-
 -- List of (level, (edgeIdx, vertexIdx))
 type BFSState = [(Int, (Int, Int))]
 
@@ -108,7 +85,6 @@ bfsState graph bonds ign start = fst $ execState (bfsState' graph bonds) (ign, s
 bfsState' :: (Ord v, Eq e, Show v, Show e, Graph g) => g v e -> EdgeList e -> State (BFSState, BFSState) ()
 bfsState' gr bonds = do
   (visited, queue) <- get
-  -- L == level, B == bond, V == vertex
   let (visitedL, (visitedB, visitedV)) = (fst &&& unzip . snd) $ unzip visited
   case queue of
         ((curLevel, (curBnd, curNum)) : rest) -> do

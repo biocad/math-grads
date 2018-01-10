@@ -8,7 +8,7 @@ import           Data.Map.Strict             (Map)
 import qualified Data.Map.Strict             as M
 import           Math.Grads.Algo.Isomorphism (GComparable (..), isIsoSub)
 import           Math.Grads.GenericGraph     (GenericGraph, gIndex)
-import           Math.Grads.Graph            (edgeType, fromList, toList)
+import           Math.Grads.Graph            (fromList)
 import           Test.Hspec
 
 instance GComparable GenericGraph Int Int GenericGraph Int Int where
