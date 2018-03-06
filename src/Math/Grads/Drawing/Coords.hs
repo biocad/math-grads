@@ -12,27 +12,23 @@ module Math.Grads.Drawing.Coords
   ) where
 
 import           Control.Monad                                    (join)
-import           Data.Map.Strict                                  (keys)
+import           Data.Map.Strict                                  (keys, singleton)
 import           Math.Grads.Algo.Cycles                           (findCycles)
 import           Math.Grads.Algo.Interaction                      (getIndices)
-import           Math.Grads.Drawing.Internal.Coords               (CoordList,
-                                                                   CoordMap,
-                                                                   bondLength,
+import           Math.Grads.Drawing.Internal.Coords               (CoordList, CoordMap, bondLength,
                                                                    coordListForDrawing)
 import           Math.Grads.Drawing.Internal.Cycles               (getCoordsOfGlobalCycle)
 import           Math.Grads.Drawing.Internal.CyclesPathsAlignment (alignCyclesAndPaths)
 import           Math.Grads.Drawing.Internal.Paths                (findPaths, getCoordsOfPath)
-import           Math.Grads.Drawing.Internal.Sampling             (Constraint (..),
-                                                                   EdgeFixator,
+import           Math.Grads.Drawing.Internal.Sampling             (Constraint (..), EdgeFixator,
                                                                    bestSample)
 import           Math.Grads.GenericGraph                          (GenericGraph)
-import           Math.Grads.Graph                                 (EdgeList,
-                                                                   Graph,
-                                                                   toList)
+import           Math.Grads.Graph                                 (EdgeList, Graph, toList)
 import           System.Random                                    (StdGen)
 
 getCoordsForGraph :: (Ord v, Ord e, Eq e, Drawable GenericGraph v e) => StdGen -> GenericGraph v e -> Maybe CoordMap
-getCoordsForGraph stdGen graph = res
+getCoordsForGraph stdGen graph = if length atoms == 1 then Just (singleton 0 (0, 0))
+                                 else res
   where
     (atoms, bonds) = toList graph
     (globalCycles, paths) = splitIntoCyclesAndPaths bonds
