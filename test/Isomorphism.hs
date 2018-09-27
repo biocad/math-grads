@@ -13,8 +13,7 @@ import           Test.Hspec
 
 instance GComparable GenericGraph Int Int GenericGraph Int Int where
   vComparator g1 g2 ind1 ind2 = gIndex g1 A.! ind1 == gIndex g2 A.! ind2
-
-  eComparator _ _ = (==)
+  eComparator _ _ (_, _, t) (_, _, t') = t == t'
 
 pathToGraphs :: FilePath
 pathToGraphs = "data/Graphs.txt"

@@ -52,10 +52,10 @@ areAdjacent bs n n' = n' `elem` getVertexAdjacent bs n
 getEnds :: GraphEdge e -> [Int]
 getEnds (b, e, _) = [b, e]
 
-haveSharedVertex :: GraphEdge e -> GraphEdge e -> Bool
+haveSharedVertex :: GraphEdge e1 -> GraphEdge e2 -> Bool
 haveSharedVertex b1 b2 = isJust $ getSharedVertex b1 b2
 
-getSharedVertex :: GraphEdge e -> GraphEdge e -> Maybe Int
+getSharedVertex :: GraphEdge e1 -> GraphEdge e2 -> Maybe Int
 getSharedVertex b1 b2 | null is = Nothing
                       | length is == 2 = Nothing
                       | otherwise = Just $ head is
