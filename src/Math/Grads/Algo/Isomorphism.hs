@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE ViewPatterns          #-}
 
 module Math.Grads.Algo.Isomorphism
   ( EComparator, VComparator
@@ -23,27 +24,38 @@ import           Data.Maybe              (isJust, listToMaybe)
 import           Data.Tuple              (swap)
 import qualified Data.Vector             as V
 import           Math.Grads.GenericGraph (GenericGraph (..))
-import           Math.Grads.Graph        (Graph, changeIndsEdge, fromList,
-                                          toList, vCount, (!.))
+import           Math.Grads.Graph        (Graph, GraphEdge, changeIndsEdge,
+                                          fromList, incidentIdx, toList, vCount,
+                                          (!.))
 import           Math.Grads.Utils        (nub)
 
 type GenericGraphIso v e = GenericGraph Int e
 
--- Function that checks whether we consider two vertices (considering index of vertice) of different graphs to be isomorphic
-type VComparator v1 v2 = Int -> Int -> Bool
+type VertexIndex = Int
+-- | Function that checks whether two vertices are identical
+-- Due to properties related to index of vertex,
+-- like number of heavy neighbors, we consider vertex indices instead of vertices
+--
+type VComparator v1 v2 = VertexIndex -> VertexIndex -> Bool
 
--- Function that checks whether we consider two edges of different graphs to be isomorphic
-type EComparator e1 e2 = e1 -> e2 -> Bool
+-- | Function that checks whether two edges are identical
+-- Due to properties related to index of vertex,
+-- like belonging to a cycle, we consider GraphEdge (Int, Int, e) instead of e
+--
+type EComparator e1 e2 = GraphEdge e1 -> GraphEdge e2 -> Bool
 
+-- | Type class for graphs that could be checked for isomorphism
+--
 class (Graph g1, Graph g2) => GComparable g1 v1 e1 g2 v2 e2 where
   vComparator :: g1 v1 e1 -> g2 v2 e2 -> VComparator v1 v2
-
   eComparator :: g1 v1 e1 -> g2 v2 e2 -> EComparator e1 e2
 
--- Returns True if the two graphs are equivalent
-isIso :: (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2) => GenericGraph v1 e1
-                                                                             -> GenericGraph v2 e2
-                                                                             -> Bool
+-- | Isomorphism check
+--
+isIso :: (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2, Eq e1, Eq e2) =>
+       GenericGraph v1 e1
+    -> GenericGraph v2 e2
+    -> Bool
 isIso queryGraph targetGraph = res
   where
     l1 = vCount queryGraph
@@ -52,27 +64,32 @@ isIso queryGraph targetGraph = res
 
     res = l1 == l2 && isoSub
 
--- Returns True if second graph has subgraph isomorphic to first graph
-isIsoSub :: (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2) => GenericGraph v1 e1
-                                                                                -> GenericGraph v2 e2
-                                                                                -> Bool
-isIsoSub queryGraph targetGraph = isJust (getIso queryGraph targetGraph)
+-- | Check for queryGraph \subseteq targetGraph
+--
+isIsoSub :: (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2, Eq e1, Eq e2) =>
+       GenericGraph v1 e1
+    -> GenericGraph v2 e2
+    -> Bool
+isIsoSub queryGraph targetGraph = isJust $ getIso queryGraph targetGraph
 
--- Match from vertices of query graph to vertices of target graph
-getIso :: (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2) => GenericGraph v1 e1
-                                                                              -> GenericGraph v2 e2
-                                                                              -> Maybe (Map Int Int)
-getIso queryGraph targetGraph = listToMaybe matches
-  where
-    matches = getMultiIso queryGraph targetGraph
+-- | Get one vertices matching (if exists) from queryGraph to targetGraph
+--
+getIso :: (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2, Eq e1, Eq e2) =>
+       GenericGraph v1 e1
+    -> GenericGraph v2 e2
+    -> Maybe (Map Int Int)
+getIso queryGraph targetGraph = listToMaybe $ getMultiIso queryGraph targetGraph
 
-getMultiIso ::   (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2) => GenericGraph v1 e1
-                                                                                     -> GenericGraph v2 e2
-                                                                                     -> [Map Int Int]
+-- | Get all possible vertices matching from queryGraph to targetGraph
+--
+getMultiIso :: (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2, Eq e1, Eq e2) =>
+       GenericGraph v1 e1
+    -> GenericGraph v2 e2
+    -> [Map Int Int]
 getMultiIso queryGraph' targetGraph' = matches
   where
-    ((queryGraph, queryGraphWI), fromIsoToOldQ) = second inverseMap (graphToGraphIso queryGraph')
-    ((targetGraph, targetGraphWI), fromIsoToOldT) = second inverseMap (graphToGraphIso targetGraph')
+    ((queryGraph, queryGraphWI), fromIsoToOldQ) = second inverseMap $ graphToGraphIso queryGraph'
+    ((targetGraph, targetGraphWI), fromIsoToOldT) = second inverseMap $ graphToGraphIso targetGraph'
 
     vComp = vComparator queryGraphWI targetGraphWI
     eComp = eComparator queryGraphWI targetGraphWI
@@ -86,7 +103,7 @@ inverseMap = M.fromList . (swap <$>) . M.toList
 getMatchMap :: Matrix Int -> Map Int Int -> Map Int Int -> Map Int Int
 getMatchMap isoMatrix fromIsoToOldQ fromIsoToOldT = res
   where
-    forMap = fmap (getMatchRow isoMatrix) [0.. nrows isoMatrix - 1]
+    forMap = fmap (getMatchRow isoMatrix) [0 .. nrows isoMatrix - 1]
     res = M.fromList (fmap ((fromIsoToOldQ M.!) *** (fromIsoToOldT M.!)) forMap)
 
 getMatchRow :: Matrix Int -> Int -> (Int, Int)
@@ -98,10 +115,11 @@ getMatchRow isoMatrix ind = (ind, helper 0)
     helper counter = if row V.! counter == 1 then counter
                      else helper (counter + 1)
 
-isoGraph :: VComparator v1 v2 -> EComparator e1 e2
-                              -> GenericGraphIso v1 e1
-                              -> GenericGraphIso v2 e2
-                              -> [Matrix Int]
+isoGraph :: (Eq e1, Eq e2) => VComparator v1 v2
+                           -> EComparator e1 e2
+                           -> GenericGraphIso v1 e1
+                           -> GenericGraphIso v2 e2
+                           -> [Matrix Int]
 isoGraph vComp eComp queryGraph targetGraph = res
   where
     queryGraphEdges = (fst <$>) <$> gAdjacency queryGraph
@@ -119,25 +137,26 @@ isoGraph vComp eComp queryGraph targetGraph = res
 
     res = recurse eComp queryGraph targetGraph unusedColumns currentRow gMatrix pMatrix mMatrix
 
-fits :: VComparator v1 v2 -> EComparator e1 e2
-                          -> GenericGraphIso v1 e1
-                          -> GenericGraphIso v2 e2
-                          -> Int
-                          -> Int
-                          -> Bool
+fits :: (Eq e1, Eq e2) => VComparator v1 v2
+                       -> EComparator e1 e2
+                       -> GenericGraphIso v1 e1
+                       -> GenericGraphIso v2 e2
+                       -> Int
+                       -> Int
+                       -> Bool
 fits vComp eComp queryGraph targetGraph i j = res
   where
-    (vertex, edges) = second (fmap snd) (gIndex queryGraph A.! (i - 1), gAdjacency queryGraph A.! (i - 1))
-    (vertex', edges') = second (fmap snd) (gIndex targetGraph A.! (j - 1), gAdjacency targetGraph A.! (j - 1))
+    (vertex, edges) = (gIndex queryGraph A.! (i - 1), incidentIdx queryGraph $ i - 1)
+    (vertex', edges') = (gIndex targetGraph A.! (j - 1), incidentIdx targetGraph $ j - 1)
     res = length edges <= length edges' && canBeSubset eComp edges edges' && vertex `vComp` vertex'
 
-canBeSubset :: forall e1 e2. EComparator e1 e2 -> [e1] -> [e2] -> Bool
+canBeSubset :: forall e1 e2. EComparator e1 e2 -> [GraphEdge e1] -> [GraphEdge e2] -> Bool
 canBeSubset eComp query target = uniqueSeq maps
   where
-    bondsInd = zip [0..] target
+    bondsInd = zip [0 ..] target
     maps = findMatches <$> query
 
-    findMatches :: e1 -> [Int]
+    findMatches :: GraphEdge e1 -> [Int]
     findMatches thisEdge = fst <$> filter (\(_, otherEdge) -> eComp thisEdge otherEdge) bondsInd
 
 uniqueSeq :: [[Int]] -> Bool
@@ -148,33 +167,35 @@ uniqueSeq maps = res
     res = any (\x -> length x == length (nub x)) seqs
 
 -- Converts input graph into graph in which vertices with most amount of edges have lowest indices
-graphToGraphIso :: (Ord v) => GenericGraph v e -> ((GenericGraphIso v e, GenericGraph v e), M.Map Int Int)
+graphToGraphIso :: (Ord v) => GenericGraph v e
+                           -> ((GenericGraphIso v e, GenericGraph v e), M.Map Int Int)
 graphToGraphIso graph = res
   where
     (vertices, edges) = toList graph
     vArr = gIndex graph
 
-    indsWithNCount = fmap (id &&& (length . (graph !.))) [0.. length vertices - 1]
+    indsWithNCount = fmap (id &&& (length . (graph !.))) [0 .. length vertices - 1]
     sortedInds = fst <$> sortOn (\x -> - (snd x)) indsWithNCount
-    changesMap = M.fromList (zip sortedInds [0..])
+    changesMap = M.fromList (zip sortedInds [0 ..])
 
     sortedV = fmap (vArr A.!) sortedInds
     changedEdges = fmap (changeIndsEdge (changesMap M.!)) edges
 
     forGraphWI = (sortedV, changedEdges)
-    forGraph = ([0.. length sortedV - 1], changedEdges)
+    forGraph = ([0 .. length sortedV - 1], changedEdges)
 
     res = ((fromList forGraph, fromList forGraphWI), changesMap)
 
 -- Ullman's subgraph isomorphism algorithm itself
-recurse :: EComparator e1 e2 -> GenericGraphIso v1 e1
-                             -> GenericGraphIso v2 e2
-                             -> [Int]
-                             -> Int
-                             -> Matrix Int
-                             -> Matrix Int
-                             -> Matrix Int
-                             -> [Matrix Int]
+recurse :: (Eq e1, Eq e2) => EComparator e1 e2
+                          -> GenericGraphIso v1 e1
+                          -> GenericGraphIso v2 e2
+                          -> [Int]
+                          -> Int
+                          -> Matrix Int
+                          -> Matrix Int
+                          -> Matrix Int
+                          -> [Matrix Int]
 recurse eComp queryGraph targetGraph unusedColumns currentRow gMatrix pMatrix mMatrix = res
   where
     prunedM = prune eComp queryGraph targetGraph mMatrix currentRow
@@ -193,11 +214,12 @@ recurse eComp queryGraph targetGraph unusedColumns currentRow gMatrix pMatrix mM
         newRow = currentRow + 1
         changedMatrix = changeRow prunedM newRow x
 
-prune :: EComparator e1 e2 -> GenericGraphIso v1 e1
-                           -> GenericGraphIso v2 e2
-                           -> Matrix Int
-                           -> Int
-                           -> Matrix Int
+prune :: (Eq e1, Eq e2) => EComparator e1 e2
+                        -> GenericGraphIso v1 e1
+                        -> GenericGraphIso v2 e2
+                        -> Matrix Int
+                        -> Int
+                        -> Matrix Int
 prune eComp queryGraph targetGraph mMatrix currentRow | null indicesToChange = mMatrix
                                                       | hasEmptyRow mMatrix = mMatrix
                                                       | otherwise = res
@@ -215,20 +237,28 @@ prune eComp queryGraph targetGraph mMatrix currentRow | null indicesToChange = m
     res = prune eComp queryGraph targetGraph changedMMatrix currentRow
 
 -- Returns True if we can map all neighbors of query vertex to neighbors of target vertex in mMatrix
-hasSuitableNeighbors :: EComparator e1 e2 -> GenericGraphIso v1 e1
-                                          -> GenericGraphIso v2 e2
-                                          -> Matrix Int
-                                          -> Int
-                                          -> Int
-                                          -> Bool
+hasSuitableNeighbors :: forall v1 v2 e1 e2. (Eq e1, Eq e2) => EComparator e1 e2
+                                                           -> GenericGraphIso v1 e1
+                                                           -> GenericGraphIso v2 e2
+                                                           -> Matrix Int
+                                                           -> Int
+                                                           -> Int
+                                                           -> Bool
 hasSuitableNeighbors eComp queryGraph targetGraph mMatrix query target = doesSatisfy
   where
     iQ = query - 1
     iT = target - 1
 
-    neighborsOfQ = gAdjacency queryGraph A.! iQ
-    neighborsOfT = gAdjacency targetGraph A.! iT
-    doesSatisfy = all (\(a, t) -> any (\(b, t') -> getElem (a + 1) (b + 1) mMatrix == 1 && eComp t t') neighborsOfT) neighborsOfQ
+    neighborsOfQ = (\(i, e) -> (iQ, i, e)) <$> queryGraph !. iQ
+    neighborsOfT = (\(i, e) -> (iT, i, e)) <$> targetGraph !. iT
+
+    hasProperNeighbor :: GraphEdge e1 -> Bool
+    hasProperNeighbor edge = any (\edge' -> getProperElem edge edge' == 1 && eComp edge edge') neighborsOfT
+
+    getProperElem :: GraphEdge e1 -> GraphEdge e2 -> Int
+    getProperElem (_, b, _) (_, b', _) = getElem (b + 1) (b' + 1) mMatrix
+
+    doesSatisfy = all hasProperNeighbor neighborsOfQ
 
 -- Checks whether mMatrix encodes an isomorphism between pMatrix and gMatrix
 isIsomorphism :: Matrix Int -> Matrix Int -> Matrix Int -> Bool
