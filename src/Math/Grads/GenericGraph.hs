@@ -1,4 +1,6 @@
-{-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE InstanceSigs  #-}
+{-# LANGUAGE ViewPatterns  #-}
 
 module Math.Grads.GenericGraph
   ( GenericGraph (..)
@@ -18,20 +20,28 @@ module Math.Grads.GenericGraph
   ) where
 
 import           Control.Arrow    (first)
+import           Data.Aeson       (FromJSON (..), ToJSON (..), defaultOptions,
+                                   genericParseJSON, genericToJSON)
 import qualified Data.Array       as A
 import           Data.List        (find, groupBy, sortBy)
 import           Data.Map.Strict  (Map, mapKeys, member, (!))
 import qualified Data.Map.Strict  as M
 import           Data.Maybe       (fromJust, fromMaybe)
 import qualified Data.Set         as S
-
+import           GHC.Generics     (Generic)
 import           Math.Grads.Graph (Graph (..))
 
 data GenericGraph v e = GenericGraph {
     gIndex     :: A.Array Int v,
     gRevIndex  :: Map v Int,
     gAdjacency :: A.Array Int [(Int, e)]
-}
+} deriving (Generic)
+
+instance (Ord v, Eq e, ToJSON v, ToJSON e) => ToJSON (GenericGraph v e) where
+  toJSON (toList -> l) = genericToJSON defaultOptions l
+
+instance (Ord v, Eq e, FromJSON v, FromJSON e) => FromJSON (GenericGraph v e) where
+  parseJSON v = fromList <$> genericParseJSON defaultOptions v
 
 instance Graph GenericGraph where
   fromList :: (Ord v, Eq v) => ([v], [(Int, Int, e)]) -> GenericGraph v e

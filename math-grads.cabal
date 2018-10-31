@@ -1,5 +1,5 @@
 name:                math-grads
-version:             0.1.4.0
+version:             0.1.4.1
 synopsis:            Library containing graph data structures and graph algorithms
 description:         Library containing graph data structures and graph algorithms
                      .
@@ -37,6 +37,7 @@ library
                      , Math.Grads.Drawing.Internal.Sampling
                      , Math.Grads.Drawing.Internal.Utils
   build-depends:       base >= 4.7 && < 5
+                     , aeson
                      , array
                      , containers
                      , either
