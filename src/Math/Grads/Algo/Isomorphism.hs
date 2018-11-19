@@ -58,11 +58,11 @@ isIso :: (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2, Eq 
     -> Bool
 isIso queryGraph targetGraph = res
   where
-    l1 = vCount queryGraph
-    l2 = vCount targetGraph
+    (v1, e1) = toList queryGraph
+    (v2, e2) = toList targetGraph
     isoSub = isIsoSub queryGraph targetGraph
 
-    res = l1 == l2 && isoSub
+    res = length v1 == length v2 && length e1 == length e2 && isoSub
 
 -- | Check for queryGraph \subseteq targetGraph
 --
