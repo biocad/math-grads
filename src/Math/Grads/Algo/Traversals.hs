@@ -89,7 +89,7 @@ bfsState' gr bonds = do
   case queue of
         ((curLevel, (curBnd, curNum)) : rest) -> do
           let curInc = (fromJust . (\x -> (~= x) `findIndex` bonds)) <$> gr `incidentIdx` curNum
-          let nextBonds = filter ((`notElem` visitedV) . (`getOtherEnd` curNum) . (bonds !!)) curInc
+          let nextBonds = nub $ filter ((`notElem` visitedV) . (`getOtherEnd` curNum) . (bonds !!)) curInc
           let nextLevel = ((`getOtherEnd` curNum) . (bonds !!)) <$> nextBonds
           let nextVisited = zip (curLevel : visitedL) $ zip (curBnd : visitedB) (curNum : visitedV)
           put (nextVisited, rest ++ zip (repeat $ curLevel +1) (zip nextBonds nextLevel))
