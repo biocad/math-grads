@@ -27,7 +27,7 @@ import qualified Data.Array       as A
 import           Data.List        (find, groupBy, sortBy)
 import           Data.Map.Strict  (Map, mapKeys, member, (!))
 import qualified Data.Map.Strict  as M
-import           Data.Maybe       (fromJust, fromMaybe)
+import           Data.Maybe       (fromJust, fromMaybe, isJust)
 import qualified Data.Set         as S
 import           GHC.Generics     (Generic)
 import           Math.Grads.Graph (Graph (..))
