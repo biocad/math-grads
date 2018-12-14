@@ -17,6 +17,7 @@ module Math.Grads.GenericGraph
   , subgraph
   , sumGraphs
   , typeOfEdge
+  , isConnected
   ) where
 
 import           Control.Arrow    (first)
@@ -189,6 +190,9 @@ getEdge graph from to = found
   where
     neighbors = graph !. from
     found = snd (fromJust (find ((== to) . fst) neighbors))
+
+isConnected :: GenericGraph v e -> Int -> Int -> Bool
+isConnected g fInd tInd = isJust $ find ((==) tInd . fst) $ safeAt g fInd
 
 sumGraphs :: Ord v => GenericGraph v e -> GenericGraph v e -> GenericGraph v e
 sumGraphs molGraphA molGraphB = res

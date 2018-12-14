@@ -3,7 +3,9 @@ module Math.Grads.Algo.Traversals
   , dfsCycle
   , dfsSt
   , dfs
-  , getComps) where
+  , getComps
+  , getCompsIndices
+  ) where
 
 import           Control.Arrow               ((&&&))
 import           Control.Monad.State         (State, execState)
@@ -42,6 +44,9 @@ getComps graph = res
     (_, edges) = toList graph
     comps = getComps' edges [0..length (gIndex graph) - 1] [] []
     res = fmap (subgraph graph) comps
+
+getCompsIndices :: Ord v => GenericGraph v e -> [[Int]]
+getCompsIndices graph = getComps' (snd $ toList graph) [0..length (gIndex graph) - 1] [] []
 
 getComps' :: EdgeList e -> [Int] -> [Int] -> [[Int]] -> [[Int]]
 getComps' _ [] _ res = res
