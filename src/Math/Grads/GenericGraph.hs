@@ -17,6 +17,7 @@ module Math.Grads.GenericGraph
   , subgraph
   , sumGraphs
   , typeOfEdge
+  , isConnected
   ) where
 
 import           Control.Arrow    (first)
@@ -26,7 +27,7 @@ import qualified Data.Array       as A
 import           Data.List        (find, groupBy, sortBy)
 import           Data.Map.Strict  (Map, mapKeys, member, (!))
 import qualified Data.Map.Strict  as M
-import           Data.Maybe       (fromJust, fromMaybe)
+import           Data.Maybe       (fromJust, fromMaybe, isJust)
 import qualified Data.Set         as S
 import           GHC.Generics     (Generic)
 import           Math.Grads.Graph (Graph (..))
@@ -189,6 +190,11 @@ getEdge graph from to = found
   where
     neighbors = graph !. from
     found = snd (fromJust (find ((== to) . fst) neighbors))
+
+-- | Check that two vertexes with given indexes have edge between.
+--
+isConnected :: GenericGraph v e -> Int -> Int -> Bool
+isConnected g fInd tInd = isJust $ find ((==) tInd . fst) $ safeAt g fInd
 
 sumGraphs :: Ord v => GenericGraph v e -> GenericGraph v e -> GenericGraph v e
 sumGraphs molGraphA molGraphB = res
