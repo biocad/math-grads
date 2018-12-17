@@ -191,6 +191,8 @@ getEdge graph from to = found
     neighbors = graph !. from
     found = snd (fromJust (find ((== to) . fst) neighbors))
 
+-- | Check that two vertexes with given indexes have edge between.
+--
 isConnected :: GenericGraph v e -> Int -> Int -> Bool
 isConnected g fInd tInd = isJust $ find ((==) tInd . fst) $ safeAt g fInd
 

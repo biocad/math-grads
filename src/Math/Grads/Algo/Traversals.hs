@@ -38,6 +38,9 @@ dfs' gr (cur : rest) vis bs | cur `elem` vis = dfs' gr rest vis bs
     helper :: Int -> [(Int, Int)]
     helper sec = [(cur, sec) | notElem (cur, sec) bs && notElem (sec, cur) bs]
 
+-- | Get connected components.
+-- Note that indexation will be CHANGED.
+--
 getComps :: Ord v => GenericGraph v e -> [GenericGraph v e]
 getComps graph = res
   where
@@ -45,6 +48,8 @@ getComps graph = res
     comps = getComps' edges [0..length (gIndex graph) - 1] [] []
     res = fmap (subgraph graph) comps
 
+-- | Get vertex indices of connected components.
+--
 getCompsIndices :: Ord v => GenericGraph v e -> [[Int]]
 getCompsIndices graph = getComps' (snd $ toList graph) [0..length (gIndex graph) - 1] [] []
 
