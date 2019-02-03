@@ -1,12 +1,4 @@
-resolver: https://lts.math.bio/bcd-lts-dev.yaml
-
-package-indices:
-- name: LTS-index
-  download-prefix: https://hackage.math.bio/hackage.fpcomplete.com/package/
-  http: https://hackage.math.bio/hackage.fpcomplete.com/00-index.tar.gz
-- name: Hackage Biocad
-  download-prefix: http://hackage.biocad.ru/package/
-  http: http://hackage.biocad.ru/00-index.tar.gz
+resolver: lts-13.6
 
 packages:
 - '.'

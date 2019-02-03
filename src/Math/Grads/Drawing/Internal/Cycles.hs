@@ -1,30 +1,30 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Math.Grads.Drawing.Internal.Cycles (getCoordsOfGlobalCycle) where
+-- | Module that calculates coordinates of systems of conjugated cycles in graph.
+--
+module Math.Grads.Drawing.Internal.Cycles
+  ( getCoordsOfGlobalCycle
+  ) where
 
-import           Data.Either                                      (isLeft)
-import           Data.Either.Combinators                          (fromLeft',
-                                                                   fromRight')
+import qualified Data.Array                                       as A
 import           Data.List                                        (find,
-                                                                   groupBy, nub,
+                                                                   groupBy,
                                                                    sortOn)
+import qualified Data.Map.Strict                                  as M
 import           Data.Maybe                                       (catMaybes,
                                                                    fromJust,
                                                                    isJust,
                                                                    mapMaybe)
-import           Linear.Metric                                    (norm)
+import           Linear.Metric                                    (distance,
+                                                                   norm)
 import           Linear.V2                                        (V2 (..))
 import           Linear.Vector                                    ((*^), (^/))
-
-import qualified Data.Array                                       as A
-import qualified Data.Map.Strict                                  as M
-import           Math.Angem                                       (alignmentFunc,
-                                                                   dist)
 import           Math.Grads.Algo.Cycles                           (findLocalCycles)
 import           Math.Grads.Algo.Interaction                      (getEnds,
                                                                    getIndices)
 import           Math.Grads.Algo.Paths                            (findBeginnings)
 import           Math.Grads.Algo.Traversals                       (dfsCycle)
+import           Math.Grads.Angem                                 (alignmentFunc)
 import           Math.Grads.Drawing.Internal.Coords               (Link,
                                                                    bondLength)
 import           Math.Grads.Drawing.Internal.CyclesPathsAlignment (bondsToAlignTo,
@@ -44,9 +44,10 @@ import           Math.Grads.Graph                                 (EdgeList,
                                                                    GraphEdge,
                                                                    fromList,
                                                                    vCount)
-import           Math.Grads.Utils                                 (uniter)
+import           Math.Grads.Utils                                 (nub, uniter)
 
--- Calculates coordinates of system of cycles and coordinates of bonds that are adjacent to it
+-- | Calculates coordinates of system of cycles and coordinates of edges that are adjacent to it.
+--
 getCoordsOfGlobalCycle :: Eq e => [CoordList e] -> EdgeList e -> Maybe (CoordList e)
 getCoordsOfGlobalCycle paths globalCycle = if not (null localCycles) && isJust alignedM then Just res
                                            else Nothing
@@ -140,7 +141,7 @@ reflectIfIntersects thisCycle allCycles (coordA, coordB) = if intersects then re
   where
     thisCentroid = centroid thisCycle
     otherCentroids = centroid <$> allCycles
-    intersects = any (\x -> dist x thisCentroid <= bondLength) otherCentroids
+    intersects = any (\x -> distance x thisCentroid <= bondLength) otherCentroids
 
 correctLeftMatches :: forall e. Eq e => [Coord e] -> CoordList e -> CoordList e -> CoordList e
 correctLeftMatches [] thisCycle _ = thisCycle
@@ -190,10 +191,9 @@ getLinksWithCoords :: forall e. Eq e => CoordList e -> [CoordList e] -> (Int, Ed
 getLinksWithCoords thisCycle localCycles (ind, bonds) = res
   where
     found = findAdjacentBondsCycles thisCycle localCycles ind
-    bondsLength = length bonds
 
-    alignedBonds = if isLeft found then bondsToAlignTo (fst (fromLeft' found)) (snd (fromLeft' found)) bondsLength
-                   else bondsToAlignToExtreme (fromRight' found) bondsLength
+    bondsLength  = length bonds
+    alignedBonds = either (\(f, s) -> bondsToAlignTo f s bondsLength) (flip bondsToAlignToExtreme bondsLength) found
 
     res = assignCoords bonds alignedBonds ind
 

@@ -1,3 +1,5 @@
+-- | Module that provides functions for analysis of graph's cycles.
+--
 module Math.Grads.Algo.Cycles
   ( findCycles
   , findLocalCycles
@@ -8,33 +10,37 @@ module Math.Grads.Algo.Cycles
 import           Control.Monad.State         (State, runState)
 import           Control.Monad.State.Class   (get, modify)
 import           Data.List                   (partition, sort, union, (\\))
+import           Data.Map.Strict             (Map)
+import qualified Data.Map.Strict             as M (keys, (!))
 import           Data.Set                    (Set)
 import qualified Data.Set                    as S (empty, fromList, insert,
                                                    member)
-import           Math.Grads.Algo.Interaction (getEnds, getIndices, getOtherEnd,
-                                              getVertexIncident, haveSharedEdge)
+import           Math.Grads.Algo.Interaction (edgeListToMap, getEnds,
+                                              getIndices, getOtherEnd,
+                                              getVertexIncident, haveSharedEdge,
+                                              matchEdges)
 import           Math.Grads.Algo.Paths       (dfsAllPaths)
-import           Math.Grads.Algo.Traversals  (dfsSt)
 import           Math.Grads.GenericGraph     (GenericGraph, safeIdx)
 import           Math.Grads.Graph            (EdgeList, GraphEdge, vCount)
 
--- | Takes adjacency list and finds non-redundant set of simple cycles
--- | Cycles sharing in common one edge are considered to be one cycle
--- | BondList must obey rule (b, e, _) b < e
-findCycles :: Ord e => [GraphEdge e] -> [[GraphEdge e]]
+-- | Takes 'EdgeList' and finds non-redundant set of conjugated simple cycles.
+-- Cycles sharing in common one edge are considered to be one cycle.
+-- BondList must obey rule (b, e, _) b < e.
+--
+findCycles :: Ord e => EdgeList e -> [EdgeList e]
 findCycles bonds = sort <$> conjRings redundantCycles
   where
     redundantCycles = findCyclesR bonds
 
-    findCyclesR :: Ord e => [GraphEdge e] -> [[GraphEdge e]]
+    findCyclesR :: Ord e => EdgeList e -> [EdgeList e]
     findCyclesR bs = let (result, taken) = stateCycles bs in
       if sort taken == sort bs then result
       else result ++ findCyclesR (bs \\ taken)
 
-    stateCycles :: Ord e => [GraphEdge e] -> ([[GraphEdge e]], [GraphEdge e])
+    stateCycles :: Ord e => EdgeList e -> ([EdgeList e], EdgeList e)
     stateCycles bs = runState (cyclesHelper bs [] (minimum (getIndices bs))) []
 
-conjRings :: Ord e => [[GraphEdge e]] -> [[GraphEdge e]]
+conjRings :: Ord e => [EdgeList e] -> [EdgeList e]
 conjRings (b : bs) =
   let
     (shd, rest) = partition (haveSharedEdge b) bs
@@ -44,8 +50,8 @@ conjRings (b : bs) =
       _  -> conjRings $ foldr union b shd : rest
 conjRings b = b
 
-takeCycle :: [GraphEdge e] -> GraphEdge e -> [GraphEdge e]
-takeCycle [] _ = error "Take cycle on empty list."
+takeCycle :: EdgeList e -> GraphEdge e -> EdgeList e
+takeCycle [] _                                        = []
 takeCycle bl@((aPop, bPop, _) : _) bn@(aNow, bNow, _) = bn : takeWhile cond bl ++ take 1 (dropWhile cond bl)
   where
     theB | bPop == aNow = bNow
@@ -55,7 +61,7 @@ takeCycle bl@((aPop, bPop, _) : _) bn@(aNow, bNow, _) = bn : takeWhile cond bl +
     cond :: GraphEdge e -> Bool
     cond (a', b', _) = theB /= a' && theB /= b'
 
-cyclesHelper :: Eq e => [GraphEdge e] -> [GraphEdge e] -> Int -> State [GraphEdge e] [[GraphEdge e]]
+cyclesHelper :: Eq e => EdgeList e -> EdgeList e -> Int -> State (EdgeList e) [EdgeList e]
 cyclesHelper bs trc n = do
   curSt <- get
   let adjBonds = filter (`notElem` curSt) $ getVertexIncident bs n
@@ -69,10 +75,13 @@ cyclesHelper bs trc n = do
 
   return $ (takeCycle trc <$> curBondClosures) ++ concat restBondClosures
 
-isEdgeInCycle :: Ord e => [GraphEdge e] -> Int -> Bool
+-- | Checks that edge with given index in 'EdgeList' is contained in any cycle.
+--
+isEdgeInCycle :: Ord e => EdgeList e -> Int -> Bool
 isEdgeInCycle bs n = any ((bs !! n) `elem`) $ findCycles bs
 
--- Finds all cycles of minimal length contained in system of cycles
+-- | Finds all cycles of minimal length contained in system of conjugated cycles.
+--
 findLocalCycles :: Eq e => EdgeList e -> [EdgeList e]
 findLocalCycles bonds = if null cycles then []
                         else helperFilter (tail res) [head res]
@@ -84,8 +93,29 @@ findLocalCycles bonds = if null cycles then []
 findLocalCycles' :: Eq e => EdgeList e -> [EdgeList e]
 findLocalCycles' bonds = concatMap (\(a, b, _) -> dfsAllPaths bonds a b) cycleBonds
   where
-    stBonds = dfsSt bonds
+    stBonds    = dfsSt bonds
     cycleBonds = bonds \\ stBonds
+
+    dfsSt :: EdgeList e -> EdgeList e
+    dfsSt bs = matchEdges bs bondsInd
+      where
+        graph    = edgeListToMap bs
+        bondsInd = dfsSt' graph (M.keys graph) [] []
+
+    dfsSt' :: Map Int [Int] -> [Int] -> [Int] -> [(Int, Int)] -> [(Int, Int)]
+    dfsSt' _ [] _ bs = bs
+    dfsSt' graph (current : toVisit) visited bs | current `elem` visited = dfsSt' graph toVisit visited bs
+                                                | otherwise = dfsSt' graph toVisitModified (current:visited) visitedBonds
+      where
+        visitedBonds = bs ++ if not (null visited) then [found | snd found /= -1] else []
+        found = findRib graph visited current
+
+        toVisitModified = (graph M.! current) ++ toVisit
+
+    findRib :: Map Int [Int] -> [Int] -> Int -> (Int, Int)
+    findRib graph visited current = (current, if not (null found) then head found else -1)
+      where
+        found = filter (`elem` visited) (graph M.! current)
 
 filterBigCycles :: Eq e => EdgeList e -> [EdgeList e] -> Bool
 filterBigCycles currentCycle cycles = not (foldl (\x y -> x || currentCycle /= y && length currentCycle > length y && length (filter (`elem` currentCycle) y) > 1) False cycles)
@@ -96,8 +126,8 @@ helperFilter (x:xs) ready = if exists x ready then helperFilter xs ready else he
   where
     exists a1 = any (\x' -> length a1 == length x' && all (\(a, b, t) -> (a, b, t) `elem` x' || (b, a, t) `elem` x') a1)
 
--- Checks whether or not given atom belongs to any cycle. This information is used in SMILES construction.
--- If an atom belongs to a cycle and has double or triple bond, depth-first search will branch to it.
+-- | Checks whether or not given vertex belongs to any cycle.
+--
 isCyclic :: GenericGraph v e -> Int -> Int -> (Bool, Set Int) -> Int -> (Bool, Set Int)
 isCyclic graph target previous (result, visited) current | result = (result, visited)
                                                          | (previous /= (-1)) && (current == target) = (True, visited)
@@ -113,7 +143,8 @@ isCyclic graph target previous (result, visited) current | result = (result, vis
     foldFunc :: (Bool, Set Int) -> Int -> (Bool, Set Int)
     foldFunc = isCyclic graph target current
 
--- Returns the set of all atoms which belong to any cycle.
+-- | Returns the set of all vertices which belong to any cycle.
+--
 getCyclic :: GenericGraph v e -> Set Int
 getCyclic graph = S.fromList . map fst . filter snd $ zip indices cyclic
   where

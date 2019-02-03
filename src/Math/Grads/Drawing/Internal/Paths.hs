@@ -1,6 +1,11 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Math.Grads.Drawing.Internal.Paths (findPaths, getCoordsOfPath) where
+-- | Module that calculates coordinates of paths between systems of conjugated cycles in graph.
+--
+module Math.Grads.Drawing.Internal.Paths
+  ( findPaths
+  , getCoordsOfPath
+  ) where
 
 import           Data.List                                        (delete, find,
                                                                    intersect,
@@ -13,12 +18,12 @@ import           Data.Maybe                                       (catMaybes,
                                                                    isJust)
 import           Data.Ord                                         (comparing)
 import           Linear.V2                                        (V2 (..))
-import           Math.Angem                                       (alignmentFunc)
 import           Math.Grads.Algo.Interaction                      (getIndices, getSharedVertex,
                                                                    getVertexIncident,
                                                                    isIncident)
 import           Math.Grads.Algo.Paths                            (dfsSearch, findBeginnings)
 import           Math.Grads.Algo.Traversals                       (dfs)
+import           Math.Grads.Angem                                 (alignmentFunc)
 import           Math.Grads.Drawing.Internal.Coords               (Link,
                                                                    bondLength)
 import           Math.Grads.Drawing.Internal.CyclesPathsAlignment (bondsToAlignTo)
@@ -38,7 +43,8 @@ data Path e = Path {
   pBonds  :: EdgeList e
 }
 
--- Calculates coordinates of path
+-- | Calculates coordinates of path.
+--
 getCoordsOfPath :: forall e. Eq e => EdgeList e -> CoordList e
 getCoordsOfPath bonds = fst (greedy pathWithCoords)
   where
@@ -61,7 +67,8 @@ getCoordsOfPath bonds = fst (greedy pathWithCoords)
     helper' :: PathWithLinks e -> PathWithLinks e -> Bool
     helper' x' y' = null $ (snd <$> snd x') `intersect` (fst <$> fst y')
 
--- Takes path, list of vertices which have been processed and returns links for each path
+-- | Takes path, list of vertices which have been processed and returns links for each path.
+--
 findLinkingPoints :: forall e. Path e -> [Int] -> [Path e] -> [Link e]
 findLinkingPoints Path { pBonds=list } taken = helper
   where
@@ -231,7 +238,8 @@ findPointsToSplitHard list taken = helper list []
     hasNeighbor :: Int -> GraphEdge e ->  Bool
     hasNeighbor ind x = isJust (find (\bond -> bond /= x && isIncident bond ind) list)
 
--- Finds all paths between cycles in graph
+-- | Finds all paths between cycles in graph.
+--
 findPaths :: Eq e => EdgeList e -> [Int] -> [EdgeList e]
 findPaths [] _ = []
 findPaths bonds [] = [bonds]

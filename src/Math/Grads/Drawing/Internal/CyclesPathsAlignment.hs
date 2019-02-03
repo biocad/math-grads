@@ -1,3 +1,6 @@
+-- | Module that is responsible for linking systems of conjugated cycles in graph
+-- with paths between them.
+--
 module Math.Grads.Drawing.Internal.CyclesPathsAlignment
   ( alignCyclesAndPaths
   , bondsToAlignTo
@@ -12,8 +15,8 @@ import           Linear.Matrix                      ((!*))
 import           Linear.Metric                      (dot, norm)
 import           Linear.V2                          (V2 (..))
 import           Linear.Vector                      (negated, (*^))
-import           Math.Angem                         (alignmentFunc, rotation2D)
 import           Math.Grads.Algo.Paths              (findBeginnings)
+import           Math.Grads.Angem                   (alignmentFunc, rotation2D)
 import           Math.Grads.Drawing.Internal.Coords (bondLength)
 import           Math.Grads.Drawing.Internal.Utils  (Coord, CoordList,
                                                      cleanCoordList,
@@ -22,7 +25,8 @@ import           Math.Grads.Graph                   (EdgeList)
 
 type CoordsEnds e = (CoordList e, EdgeList e)
 
--- Given cycles and paths between them unites everything into one structure
+-- | Given cycles and paths between them unites everything into one structure if possible.
+--
 alignCyclesAndPaths :: Eq e => [CoordList e] -> [CoordList e] -> Maybe (CoordList e)
 alignCyclesAndPaths paths cycles = greedyAlignmentOfCyclesAndPaths (cyclesWithRestoredEnds ++ pathsWithRestoredEnds)
   where
@@ -83,16 +87,8 @@ detectAndAlignNeighborsM bondsToFind theseCoords (coords, ends) = do
 findBondsToFind :: EdgeList e -> EdgeList e
 findBondsToFind bonds = catMaybes ((\ind -> find (\(a, b, _) -> a == ind || b == ind) bonds) <$> findBeginnings bonds)
 
-
--- | If we have comlicated situation where we need to calculate bondst to align to for vertex in cycle that has more then 2 neighbors
--- | then we pass direction in which we want to place neighbors and use `Extreme` function. Otherwise we use ordinary function
-bondsToAlignToExtreme :: (V2 Float, V2 Float) -> Int -> [(V2 Float, V2 Float)]
-bondsToAlignToExtreme (beg, end) number = resultingVectors
-  where
-    direction = end - beg
-    startingPointComplicated = rotation2D (-40.0) !* ((bondLength / norm direction) *^ direction)
-    resultingVectors = (\x -> (beg, beg + x)) <$> getDirections startingPointComplicated 1 47.0 number 1
-
+-- | Constructs edge that will be used to align to cycle containing given 'Coord's.
+--
 bondsToAlignTo :: Coord e -> Coord e -> Int -> [(V2 Float, V2 Float)]
 bondsToAlignTo ((a, b, _), (pointA, pointB)) ((a', b', _), (pointA', pointB')) number = resultingVectors
   where
@@ -121,6 +117,18 @@ bondsToAlignTo ((a, b, _), (pointA, pointB)) ((a', b', _), (pointA', pointB')) n
 
     start :: Float -> V2 Float
     start angle = rotation2D angle !* ((bondLength / norm vecA) *^ negated vecA)
+
+-- | If we have complicated situation where we need to calculate bonds to align to
+-- for vertex in cycle that has more then 2 neighbors then we pass direction in
+-- which we want to place neighbors and use bondsToAlignToExtreme function.
+-- Otherwise we use bondsToAlignTo function.
+--
+bondsToAlignToExtreme :: (V2 Float, V2 Float) -> Int -> [(V2 Float, V2 Float)]
+bondsToAlignToExtreme (beg, end) number = resultingVectors
+  where
+    direction = end - beg
+    startingPointComplicated = rotation2D (-40.0) !* ((bondLength / norm direction) *^ direction)
+    resultingVectors = (\x -> (beg, beg + x)) <$> getDirections startingPointComplicated 1 47.0 number 1
 
 getDirections :: V2 Float -> Int -> Float -> Int -> Float -> [V2 Float]
 getDirections prev counter angle number mult  = if counter < number then prev : getDirections new (counter + 1) angle number mult
