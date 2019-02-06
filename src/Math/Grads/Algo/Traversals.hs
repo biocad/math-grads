@@ -1,7 +1,9 @@
+-- | Module providing various kinds of graph traversals and their modifications.
+--
 module Math.Grads.Algo.Traversals
-  ( bfsState
+  ( BFSState
+  , bfsState
   , dfsCycle
-  , dfsSt
   , dfs
   , getComps
   , getCompsIndices
@@ -21,7 +23,8 @@ import           Math.Grads.GenericGraph     (GenericGraph, gIndex, subgraph)
 import           Math.Grads.Graph            (EdgeList, Graph (..))
 import           Math.Grads.Utils            (nub)
 
--- Classic dfs
+-- | Classic dfs.
+--
 dfs :: EdgeList e -> Int -> EdgeList e
 dfs bonds ind = if ind `elem` keys graphMap then matchEdges bonds bondsInd else []
   where
@@ -38,17 +41,17 @@ dfs' gr (cur : rest) vis bs | cur `elem` vis = dfs' gr rest vis bs
     helper :: Int -> [(Int, Int)]
     helper sec = [(cur, sec) | notElem (cur, sec) bs && notElem (sec, cur) bs]
 
--- | Get connected components.
+-- | Get connected components of graph.
 -- Note that indexation will be CHANGED.
 --
 getComps :: Ord v => GenericGraph v e -> [GenericGraph v e]
 getComps graph = res
   where
     (_, edges) = toList graph
-    comps = getComps' edges [0..length (gIndex graph) - 1] [] []
-    res = fmap (subgraph graph) comps
+    comps      = getComps' edges [0..length (gIndex graph) - 1] [] []
+    res        = fmap (subgraph graph) comps
 
--- | Get vertex indices of connected components.
+-- | Get indices of vertices that belong to different connected components.
 --
 getCompsIndices :: Ord v => GenericGraph v e -> [[Int]]
 getCompsIndices graph = getComps' (snd $ toList graph) [0..length (gIndex graph) - 1] [] []
@@ -60,38 +63,26 @@ getComps' edges (x : xs) taken res = if x `elem` taken then getComps' edges xs t
   where
     newComp = nub (x : getIndices (dfs edges x))
 
-dfsSt :: EdgeList e -> EdgeList e
-dfsSt bonds = matchEdges bonds bondsInd
-  where
-    graph = edgeListToMap bonds
-    bondsInd = dfsSt' graph (keys graph) [] []
-
-findRib :: Map Int [Int] -> [Int] -> Int -> (Int, Int)
-findRib graph visited current = (current, if not (null found) then head found else -1)
-  where
-    found = filter (`elem` visited) (graph ! current)
-
-dfsSt' :: Map Int [Int] -> [Int] -> [Int] -> [(Int, Int)] -> [(Int, Int)]
-dfsSt' _ [] _ bonds = bonds
-dfsSt' graph (current : toVisit) visited bonds | current `elem` visited = dfsSt' graph toVisit visited bonds
-                                               | otherwise = dfsSt' graph ((graph ! current) ++ toVisit) (current:visited) visitedBonds
-  where
-    visitedBonds = bonds ++ if not (null visited) then [found | snd found /= -1] else []
-    found = findRib graph visited current
-
--- Dfs a cycle
+-- | Dfs a simple cycle.
+--
 dfsCycle :: A.Array Int [Int] -> [Int] -> [Int] -> [Int]
 dfsCycle _ [] visited = visited
 dfsCycle graph (current:toVisit) visited | current `elem` visited = dfsCycle graph toVisit visited
                                          | otherwise = dfsCycle graph ((graph A.! current) ++ toVisit) (current:visited)
 
--- List of (level, (edgeIdx, vertexIdx))
+-- | List of (level, (edgeIdx, vertexIdx)).
+--
 type BFSState = [(Int, (Int, Int))]
 
+-- | Bfs algorithm that takes graph, its 'EdgeList', 'BFSState' corresponding to
+-- already visited vertices and 'BFSState' that corresponds to starting point
+-- of traversal and returns 'BFSState' as a result.
+--
 bfsState :: (Ord v, Eq e, Show v, Show e, Graph g) => g v e -> EdgeList e -> BFSState -> BFSState -> BFSState
 bfsState graph bonds ign start = fst $ execState (bfsState' graph bonds) (ign, start)
 
--- Traverses graph from a given starting point (queue) in Breadth-first search manner
+-- | Traverses graph from a given starting point (queue) in Breadth-first search manner.
+--
 bfsState' :: (Ord v, Eq e, Show v, Show e, Graph g) => g v e -> EdgeList e -> State (BFSState, BFSState) ()
 bfsState' gr bonds = do
   (visited, queue) <- get

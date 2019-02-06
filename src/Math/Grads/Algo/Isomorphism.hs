@@ -1,11 +1,13 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE ViewPatterns          #-}
 
+-- | Module that provides functions for identifying graph/subgraph isomorphism.
+--
 module Math.Grads.Algo.Isomorphism
   ( EComparator, VComparator
   , GComparable (..)
+  , VertexIndex
   , getIso
   , getMultiIso
   , isIso
@@ -31,31 +33,34 @@ import           Math.Grads.Utils        (nub)
 
 type GenericGraphIso v e = GenericGraph Int e
 
+-- | Type alias for 'Int'.
+--
 type VertexIndex = Int
--- | Function that checks whether two vertices are identical
+
+-- | Function that checks whether two vertices are identical.
 -- Due to properties related to index of vertex,
--- like number of heavy neighbors, we consider vertex indices instead of vertices
+-- like number of neighbors, we consider vertex indices instead of vertices.
 --
 type VComparator v1 v2 = VertexIndex -> VertexIndex -> Bool
 
--- | Function that checks whether two edges are identical
+-- | Function that checks whether two edges are identical.
 -- Due to properties related to index of vertex,
--- like belonging to a cycle, we consider GraphEdge (Int, Int, e) instead of e
+-- like belonging to a cycle, we consider GraphEdge (Int, Int, e) instead of e.
 --
 type EComparator e1 e2 = GraphEdge e1 -> GraphEdge e2 -> Bool
 
--- | Type class for graphs that could be checked for isomorphism
+-- | Type class for graphs that could be checked for isomorphism.
 --
 class (Graph g1, Graph g2) => GComparable g1 v1 e1 g2 v2 e2 where
   vComparator :: g1 v1 e1 -> g2 v2 e2 -> VComparator v1 v2
   eComparator :: g1 v1 e1 -> g2 v2 e2 -> EComparator e1 e2
 
--- | Isomorphism check
+-- | Checks whether two graphs are isomorphic.
 --
-isIso :: (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2, Eq e1, Eq e2) =>
-       GenericGraph v1 e1
-    -> GenericGraph v2 e2
-    -> Bool
+isIso :: (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2, Eq e1, Eq e2)
+      => GenericGraph v1 e1
+      -> GenericGraph v2 e2
+      -> Bool
 isIso queryGraph targetGraph = res
   where
     (v1, e1) = toList queryGraph
@@ -64,28 +69,28 @@ isIso queryGraph targetGraph = res
 
     res = length v1 == length v2 && length e1 == length e2 && isoSub
 
--- | Check for queryGraph \subseteq targetGraph
+-- | Check for queryGraph \( \subseteq \) targetGraph.
 --
-isIsoSub :: (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2, Eq e1, Eq e2) =>
-       GenericGraph v1 e1
-    -> GenericGraph v2 e2
-    -> Bool
+isIsoSub :: (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2, Eq e1, Eq e2)
+         => GenericGraph v1 e1 -- ^ queryGraph
+         -> GenericGraph v2 e2 -- ^ targetGraph
+         -> Bool
 isIsoSub queryGraph targetGraph = isJust $ getIso queryGraph targetGraph
 
--- | Get one vertices matching (if exists) from queryGraph to targetGraph
+-- | Get one vertices matching (if exists) from queryGraph to targetGraph.
 --
-getIso :: (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2, Eq e1, Eq e2) =>
-       GenericGraph v1 e1
-    -> GenericGraph v2 e2
-    -> Maybe (Map Int Int)
+getIso :: (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2, Eq e1, Eq e2)
+       => GenericGraph v1 e1 -- ^ queryGraph
+       -> GenericGraph v2 e2 -- ^ targetGraph
+       -> Maybe (Map Int Int)
 getIso queryGraph targetGraph = listToMaybe $ getMultiIso queryGraph targetGraph
 
--- | Get all possible vertices matching from queryGraph to targetGraph
+-- | Get all possible vertices matchings from queryGraph to targetGraph.
 --
-getMultiIso :: (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2, Eq e1, Eq e2) =>
-       GenericGraph v1 e1
-    -> GenericGraph v2 e2
-    -> [Map Int Int]
+getMultiIso :: (Ord v1, Ord v2, GComparable GenericGraph v1 e1 GenericGraph v2 e2, Eq e1, Eq e2)
+            => GenericGraph v1 e1 -- ^ queryGraph
+            -> GenericGraph v2 e2 -- ^ targetGraph
+            -> [Map Int Int]
 getMultiIso queryGraph' targetGraph' = matches
   where
     ((queryGraph, queryGraphWI), fromIsoToOldQ) = second inverseMap $ graphToGraphIso queryGraph'
@@ -166,7 +171,8 @@ uniqueSeq maps = res
 
     res = any (\x -> length x == length (nub x)) seqs
 
--- Converts input graph into graph in which vertices with most amount of edges have lowest indices
+-- | Converts input graph into graph in which vertices with most amount of edges have lowest indices.
+--
 graphToGraphIso :: (Ord v) => GenericGraph v e
                            -> ((GenericGraphIso v e, GenericGraph v e), M.Map Int Int)
 graphToGraphIso graph = res
@@ -186,7 +192,8 @@ graphToGraphIso graph = res
 
     res = ((fromList forGraph, fromList forGraphWI), changesMap)
 
--- Ullman's subgraph isomorphism algorithm itself
+-- | Ullman's subgraph isomorphism algorithm itself.
+--
 recurse :: (Eq e1, Eq e2) => EComparator e1 e2
                           -> GenericGraphIso v1 e1
                           -> GenericGraphIso v2 e2
@@ -236,7 +243,8 @@ prune eComp queryGraph targetGraph mMatrix currentRow | null indicesToChange = m
 
     res = prune eComp queryGraph targetGraph changedMMatrix currentRow
 
--- Returns True if we can map all neighbors of query vertex to neighbors of target vertex in mMatrix
+-- | Returns True if we can map all neighbors of query vertex to neighbors of target vertex in mMatrix.
+--
 hasSuitableNeighbors :: forall v1 v2 e1 e2. (Eq e1, Eq e2) => EComparator e1 e2
                                                            -> GenericGraphIso v1 e1
                                                            -> GenericGraphIso v2 e2
@@ -260,13 +268,18 @@ hasSuitableNeighbors eComp queryGraph targetGraph mMatrix query target = doesSat
 
     doesSatisfy = all hasProperNeighbor neighborsOfQ
 
--- Checks whether mMatrix encodes an isomorphism between pMatrix and gMatrix
-isIsomorphism :: Matrix Int -> Matrix Int -> Matrix Int -> Bool
+-- | Checks whether mMatrix encodes an isomorphism between pMatrix and gMatrix.
+--
+isIsomorphism :: Matrix Int -- ^ gMatrix
+              -> Matrix Int -- ^ pMatrix
+              -> Matrix Int -- ^ mMatrix
+              -> Bool
 isIsomorphism gMatrix pMatrix mMatrix = leqMatrices pMatrix check
   where
     check = multStd mMatrix (transpose (multStd mMatrix gMatrix))
 
--- Componentwise "less or equal" operation for matrices
+-- | Componentwise "less or equal" operation for matrices.
+--
 leqMatrices :: Matrix Int -> Matrix Int -> Bool
 leqMatrices matrixA matrixB = nrows matrixA * ncols matrixA <= nrows matrixB * ncols matrixB && helper elems
   where
@@ -275,7 +288,8 @@ leqMatrices matrixA matrixB = nrows matrixA * ncols matrixA <= nrows matrixB * n
     elems = [(i, j) | i <- [1..numOfRows], j <- [1..numOfColumns]]
     helper = foldr (\x -> (&&) (uncurry getElem x matrixA <= uncurry getElem x matrixB)) True
 
--- Replace all elements in row with 0 apart from chosen one
+-- | Replace all elements in row with 0 apart from chosen one.
+--
 changeRow :: Matrix Int -> Int -> Int -> Matrix Int
 changeRow mMatrix row column = mapRow helper row mMatrix
   where helper column' a = if column' /= column then 0 else a
