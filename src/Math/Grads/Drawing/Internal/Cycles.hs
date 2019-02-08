@@ -8,7 +8,7 @@ module Math.Grads.Drawing.Internal.Cycles
 
 import qualified Data.Array                                       as A
 import           Data.List                                        (find,
-                                                                   groupBy,
+                                                                   groupBy, nub,
                                                                    sortOn)
 import qualified Data.Map.Strict                                  as M
 import           Data.Maybe                                       (catMaybes,
@@ -44,7 +44,7 @@ import           Math.Grads.Graph                                 (EdgeList,
                                                                    GraphEdge,
                                                                    fromList,
                                                                    vCount)
-import           Math.Grads.Utils                                 (nub, uniter)
+import           Math.Grads.Utils                                 (uniter)
 
 -- | Calculates coordinates of system of cycles and coordinates of edges that are adjacent to it.
 --
