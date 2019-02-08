@@ -1,5 +1,9 @@
 # Math.Grads
 
+[![Travis](https://img.shields.io/travis/biocad/math-grads.svg)](https://travis-ci.org/biocad/math-grads)
+[![hackage](https://img.shields.io/hackage/v/math-grads.svg)](https://hackage.haskell.org/package/math-grads)
+[![hackage-deps](https://img.shields.io/hackage-deps/v/math-grads.svg)](https://hackage.haskell.org/package/math-grads)
+
 Math.Grads is library that provides graph-like data structures
 and various useful algorithms for analysis of these data structures.
 
