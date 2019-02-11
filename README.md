@@ -30,9 +30,9 @@ that require their parameters to be Graphs.
 
 ## Algorithms
 
-### Ullman's subgraph isomorphism algorithm
+### Ullmann's subgraph isomorphism algorithm
 
-Math.Grads contains implementation of Ullman's subgraph isomorphism 
+Math.Grads contains implementation of Ullmann's subgraph isomorphism 
 [algorithm](https://www.cs.bgu.ac.il/~dinitz/Course/SS-12/Ullman_Algorithm.pdf).
 There are several functions that one can find helpful in order to check two graphs
 for isomorphism or subgraph isomorphism: 

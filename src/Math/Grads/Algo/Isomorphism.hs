@@ -192,7 +192,7 @@ graphToGraphIso graph = res
 
     res = ((fromList forGraph, fromList forGraphWI), changesMap)
 
--- | Ullman's subgraph isomorphism algorithm itself.
+-- | Ullmann's subgraph isomorphism algorithm itself.
 --
 recurse :: (Eq e1, Eq e2) => EComparator e1 e2
                           -> GenericGraphIso v1 e1
