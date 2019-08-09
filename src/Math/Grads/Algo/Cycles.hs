@@ -91,6 +91,8 @@ findLocalCycles bonds = if null cycles then []
     cycles = filter (\x -> length x < 21) (findSimpleCycles bonds)
     res = filter (`filterBigCycles` cycles) cycles
 
+-- | Finds all simple cycles in fused cycles system.
+--
 findSimpleCycles :: Eq e => EdgeList e -> [EdgeList e]
 findSimpleCycles bonds = concatMap (\(a, b, _) -> dfsAllPaths bonds a b) cycleBonds
   where
