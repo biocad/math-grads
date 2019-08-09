@@ -2,6 +2,7 @@
 --
 module Math.Grads.Algo.Cycles
   ( findCycles
+  , findSimpleCycles
   , findLocalCycles
   , getCyclic
   , isEdgeInCycle
@@ -87,11 +88,13 @@ findLocalCycles bonds = if null cycles then []
                         else helperFilter (tail res) [head res]
   where
     -- TODO: We need to remove this filter.
-    cycles = filter (\x -> length x < 21) (findLocalCycles' bonds)
+    cycles = filter (\x -> length x < 21) (findSimpleCycles bonds)
     res = filter (`filterBigCycles` cycles) cycles
 
-findLocalCycles' :: Eq e => EdgeList e -> [EdgeList e]
-findLocalCycles' bonds = concatMap (\(a, b, _) -> dfsAllPaths bonds a b) cycleBonds
+-- | Finds all simple cycles in fused cycles system.
+--
+findSimpleCycles :: Eq e => EdgeList e -> [EdgeList e]
+findSimpleCycles bonds = concatMap (\(a, b, _) -> dfsAllPaths bonds a b) cycleBonds
   where
     stBonds    = dfsSt bonds
     cycleBonds = bonds \\ stBonds
