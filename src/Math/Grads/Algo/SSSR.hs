@@ -37,14 +37,14 @@ findSSSR graph = sssr
         insertEdge map ix (x, y, _) = M.insert (y, x) ix $ M.insert (x, y) ix map
 
     (pid, pid') = calculatePidMatrices n m edgeIndex
-    sssrEdges   = takeSSSR n m maxSSSRs pid pid'
+    sssrEdges   = takeSSSR n maxSSSRs pid pid'
     sssr        = fmap (edges !!) <$> sssrEdges
 
-takeSSSR :: Int -> Int -> Int -> Matrix (Int, [[Int]]) -> Matrix [[Int]] -> [[Int]]
-takeSSSR n m maxSSSRs pid pid' = takeSSSR' [] [] 3 (1, 1)
+takeSSSR :: Int -> Int -> Matrix (Int, [[Int]]) -> Matrix [[Int]] -> [[Int]]
+takeSSSR n maxSSSRs pid pid' = takeSSSR' [] [] 3 (1, 1)
   where
     takeSSSR' cycles edges len (i, j)
-      | (i, j) > (n, n) || length cycles >= maxSSSRs || length edges == m =
+      | (i, j) > (n, n) || length cycles >= maxSSSRs =
           cycles
       | curLen /= len || length ij < 1 || length ij == 1 && null ij' =
           takeSSSR' cycles edges nextLen nextInd
@@ -58,10 +58,14 @@ takeSSSR n m maxSSSRs pid pid' = takeSSSR' [] [] 3 (1, 1)
 
         newCycles = take (maxSSSRs - length cycles) $
           filter (`notElem` cycles) $
-          cartesianProduct ij (if even len then ij else ij') notIntersect concatSort
+          filter (\c -> all (c `notContains`) cycles) $
+          nub $
+          cartesianProduct ij (if even len then ij else ij') notIntersects concatSort
           where
-            notIntersect a b = null $ intersect a b
-            concatSort a b   = sort $ a ++ b
+            notIntersects a b = null $ intersect a b
+            concatSort a b    = sort $ a ++ b
+
+            notContains a b       = length (a `intersect` b) < length b - 1
 
         nextCycles = cycles ++ newCycles
         nextEdges  = nub $ edges ++ concat newCycles

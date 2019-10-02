@@ -19,6 +19,7 @@ import           Math.Grads.Algo.Isomorphism.Types (GComparable (..))
 import           Math.Grads.GenericGraph           (GenericGraph, gAdjacency,
                                                     getEdge)
 
+
 -- | RI isomorphism algorithm.
 -- <https://bmcbioinformatics.biomedcentral.com/articles/10.1186/1471-2105-14-S7-S13>
 
