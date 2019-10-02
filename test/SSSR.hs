@@ -1,17 +1,17 @@
 {-# LANGUAGE ViewPatterns #-}
 module Main where
 
-import           Control.Monad           (forM_)
-import           Data.List               (nub, sort)
+import           Data.List               (group, nub, sort)
 import           Data.Map                (Map)
 import qualified Data.Map                as M
 
-import           Test.Hspec              (Spec, describe, hspec, it, shouldBe,
-                                          shouldMatchList, shouldSatisfy)
+import           Test.Hspec              (Expectation, Spec, describe, hspec,
+                                          it, shouldBe, shouldMatchList,
+                                          shouldSatisfy)
 
 import           Math.Grads.Algo.SSSR    (findSSSR)
 import           Math.Grads.GenericGraph (GenericGraph)
-import           Math.Grads.Graph        (fromList)
+import           Math.Grads.Graph        (GraphEdge, fromList)
 
 
 main :: IO ()
@@ -25,9 +25,13 @@ main = hspec $ describe "SSSR" $ do
 graphSpec :: String -> GenericGraph Int Int -> Map Int Int -> Spec
 graphSpec name (sort . fmap sort . findSSSR -> sssr) cycleMap = it name $ do
     sssr `shouldMatchList` nub sssr
+    mapM_ checkSimpleCycle sssr
     sssr `shouldSatisfy` (==) (sum . M.elems $ cycleMap) . length
-    forM_ (M.toList cycleMap) (\(len, count) -> numCyclesOfLen len `shouldBe` count)
+    mapM_ (\(len, count) -> numCyclesOfLen len `shouldBe` count) $ M.toList cycleMap
   where
+    checkSimpleCycle :: [GraphEdge Int] -> Expectation
+    checkSimpleCycle = mapM_ (`shouldSatisfy` (==) 2 . length) . group . sort . concatMap (\(x, y, _) -> [x, y])
+
     numCyclesOfLen :: Int -> Int
     numCyclesOfLen n = length . filter ((==) n . length) $ sssr
 
