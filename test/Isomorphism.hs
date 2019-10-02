@@ -1,15 +1,22 @@
-{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# OPTIONS_GHC -fno-warn-orphans  #-}
+{-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module Main where
 
-import qualified Data.Array                  as A
-import           Data.Map.Strict             (Map)
-import qualified Data.Map.Strict             as M
-import           Math.Grads.Algo.Isomorphism (GComparable (..), isIsoSub)
-import           Math.Grads.GenericGraph     (GenericGraph, gIndex)
-import           Math.Grads.Graph            (fromList)
+import           Control.Arrow                      ((***))
+import qualified Data.Array                         as A
+import           Data.List                          (sort)
+import           Data.Map.Strict                    (Map)
+import qualified Data.Map.Strict                    as M
+import           Math.Grads.Graph                   (fromList, toList)
 import           Test.Hspec
+
+import           Math.Grads.Algo.Isomorphism        (GComparable (..), isIsoSub)
+import qualified Math.Grads.Algo.Isomorphism.RI     as RI
+import qualified Math.Grads.Algo.Isomorphism.Ullman as UI
+import           Math.Grads.GenericGraph            (GenericGraph, gIndex,
+                                                     getEdge)
 
 instance GComparable GenericGraph Int Int GenericGraph Int Int where
   vComparator g1 g2 ind1 ind2 = gIndex g1 A.! ind1 == gIndex g2 A.! ind2
@@ -69,28 +76,57 @@ testIsIsoSub = describe "Check whether subgraph isomorphism algorithm is working
     it "Path" $ do
         graph <- fmap (M.! "only_path") testMap
         graph `shouldSatisfy` isIsoSub pathGraph
+        uiIsoEqRiIso pathGraph graph
     it "Conjugated cycles" $ do
         graph <- fmap (M.! "only_cycles") testMap
         graph `shouldSatisfy` isIsoSub conjugatedCycles
+        uiIsoEqRiIso conjugatedCycles graph
     it "Connected cycles" $ do
         graph <- fmap (M.! "simple_drawing") testMap
         graph `shouldSatisfy` isIsoSub connectedCycles
+        uiIsoEqRiIso connectedCycles graph
     it "Conjugated cycles again" $ do
         graph <- fmap (M.! "hard_drawing") testMap
         graph `shouldSatisfy` isIsoSub conjugatedCycles
+        uiIsoEqRiIso conjugatedCycles graph
     it "Cycle and triangle" $ do
         graph <- fmap (M.! "paths_through_conjugated_cycles") testMap
         graph `shouldSatisfy` isIsoSub cycleAndTriangle
+        uiIsoEqRiIso cycleAndTriangle graph
     it "Big graph" $ do
         graph <- fmap (M.! "takes_long_if_done_wrong") testMap
         graph `shouldSatisfy` isIsoSub bigSubGraph
+        uiIsoEqRiIso bigSubGraph graph
     it "Triangle and triangle. No match" $ do
         graph <- fmap (M.! "paths_through_conjugated_cycles") testMap
         graph `shouldNotSatisfy` isIsoSub triangleAndTriangle
+        uiIsoEqRiIso triangleAndTriangle graph
     it "Cycle and triangle. No match" $ do
         graph <- fmap (M.! "simple_drawing") testMap
         graph `shouldNotSatisfy` isIsoSub cycleAndTriangle
+        uiIsoEqRiIso cycleAndTriangle graph
+
+uiIsoEqRiIso :: GenericGraph Int Int -> GenericGraph Int Int -> Expectation
+uiIsoEqRiIso query target = do
+    mapM_ (`shouldSatisfy` isValidIso query target) uiIsos
+    mapM_ (`shouldSatisfy` isValidIso query target) riIsos
+    length uiIsos `shouldBe` length riIsos
+    toIsoList uiIsos `shouldBe` toIsoList riIsos
+  where
+    uiIsos = UI.getMultiIso query target
+    riIsos = RI.getMultiIso query target
+
+    toIsoList = sort . fmap (sort . M.toList)
+
+isValidIso :: GenericGraph Int Int -> GenericGraph Int Int -> Map Int Int -> Bool
+isValidIso query target iso = vsEq && esEq
+  where
+    (queryVs, queryEs) = toList query
+    targetVs           = fst $ toList target
+
+    vsEq = all (uncurry (==) . ((queryVs !!) *** (targetVs !!))) $ M.toList iso
+    esEq = all (\(v1, v2, t) -> t == getEdge target (iso M.! v1) (iso M.! v2)) queryEs
+
 
 main :: IO ()
-main = hspec $ do
-  testIsIsoSub
+main = hspec testIsIsoSub
