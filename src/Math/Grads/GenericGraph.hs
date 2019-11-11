@@ -18,7 +18,7 @@ module Math.Grads.GenericGraph
   , removeVertices
   , safeAt
   , safeIdx
-  , subgraph
+  , subgraph, subgraphWithReindex
   , sumGraphs
   , typeOfEdge
   ) where
@@ -131,7 +131,10 @@ getVertices (GenericGraph idxArr _ _) = map snd $ A.assocs idxArr
 -- Be careful with !. and ?. operators.
 --
 subgraph :: Ord v => GenericGraph v e -> [Int] -> GenericGraph v e
-subgraph graph toKeep = fromList (newVertices, newEdges)
+subgraph graph = snd . subgraphWithReindex graph
+
+subgraphWithReindex :: Ord v => GenericGraph v e -> [Int] -> (Map Int Int, GenericGraph v e)
+subgraphWithReindex graph toKeep = (vMap, fromList (newVertices, newEdges))
   where
     vSet :: S.Set Int
     vSet = S.fromList toKeep
