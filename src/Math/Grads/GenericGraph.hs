@@ -133,6 +133,9 @@ getVertices (GenericGraph idxArr _ _) = map snd $ A.assocs idxArr
 subgraph :: Ord v => GenericGraph v e -> [Int] -> GenericGraph v e
 subgraph graph = snd . subgraphWithReindex graph
 
+-- | Get subgraph on given vertices and mapping from old `toKeep` indices to
+-- new indices of resulting subgraph.
+--
 subgraphWithReindex :: Ord v => GenericGraph v e -> [Int] -> (Map Int Int, GenericGraph v e)
 subgraphWithReindex graph toKeep = (vMap, fromList (newVertices, newEdges))
   where
