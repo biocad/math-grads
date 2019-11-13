@@ -55,6 +55,7 @@ library
                      , array
                      , bimap
                      , containers
+                     , lens
                      , linear
                      , matrix
                      , mtl
