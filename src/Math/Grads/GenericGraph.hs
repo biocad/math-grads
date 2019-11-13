@@ -28,6 +28,8 @@ import           Data.Aeson       (FromJSON (..), ToJSON (..), defaultOptions,
                                    genericParseJSON, genericToJSON)
 import           Data.Array       (Array)
 import qualified Data.Array       as A
+import           Data.Bimap       (Bimap)
+import qualified Data.Bimap       as BM
 import           Data.List        (find, groupBy, sortBy)
 import           Data.Map.Strict  (Map, mapKeys, member, (!))
 import qualified Data.Map.Strict  as M
@@ -35,6 +37,7 @@ import           Data.Maybe       (fromJust, fromMaybe, isJust)
 import qualified Data.Set         as S
 import           GHC.Generics     (Generic)
 import           Math.Grads.Graph (Graph (..))
+
 
 -- | Generic undirected graph which stores elements of type v in its vertices (e.g. labels, atoms, states etc)
 -- and elements of type e in its edges (e.g. weights, bond types, functions over states etc).
@@ -136,7 +139,7 @@ subgraph graph = snd . subgraphWithReindex graph
 -- | Get subgraph on given vertices and mapping from old `toKeep` indices to
 -- new indices of resulting subgraph.
 --
-subgraphWithReindex :: Ord v => GenericGraph v e -> [Int] -> (Map Int Int, GenericGraph v e)
+subgraphWithReindex :: Ord v => GenericGraph v e -> [Int] -> (Bimap Int Int, GenericGraph v e)
 subgraphWithReindex graph toKeep = (vMap, fromList (newVertices, newEdges))
   where
     vSet :: S.Set Int
@@ -148,10 +151,10 @@ subgraphWithReindex graph toKeep = (vMap, fromList (newVertices, newEdges))
     (oldVertices, edges)  = filter eRemain <$> toList graph
     (newVertices, oldIdx) = unzip . filter (\(_, ix) -> ix `S.member` vSet) $ zip oldVertices [0..]
 
-    vMap :: Map Int Int
-    vMap = M.fromList $ zip oldIdx [0 ..]
+    vMap :: Bimap Int Int
+    vMap = BM.fromList $ zip oldIdx [0 ..]
 
-    newEdges = map (\(at, other, bond) -> (vMap ! at, vMap ! other, bond)) edges
+    newEdges = map (\(at, other, bond) -> (vMap BM.! at, vMap BM.! other, bond)) edges
 
 -- | Add given vertices to graph.
 --
