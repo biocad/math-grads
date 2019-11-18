@@ -8,6 +8,8 @@ module Math.Grads.Algo.SSSR
 import           Prelude                 hiding (map)
 
 import           Control.Arrow           ((***))
+import           Control.Lens            (over, _1, _2)
+import           Data.Bimap              ((!>))
 import           Data.List               (intersect, nub, sort)
 import           Data.List.Index         (ifoldl)
 import           Data.Map.Strict         (Map)
@@ -16,7 +18,7 @@ import           Data.Matrix             (Matrix, matrix, unsafeGet, unsafeSet)
 import qualified Data.Set                as S
 
 import           Math.Grads.Algo.Cycles  (getCyclic)
-import           Math.Grads.GenericGraph (GenericGraph, subgraph)
+import           Math.Grads.GenericGraph (GenericGraph, subgraphWithReindex)
 import           Math.Grads.Graph        (EdgeList, toList)
 
 
@@ -26,10 +28,10 @@ import           Math.Grads.Graph        (EdgeList, toList)
 findSSSR :: Ord v => Ord e => GenericGraph v e -> [EdgeList e]
 findSSSR graph = sssr
   where
-    cyclicGraph  = subgraph graph . S.toList $ getCyclic graph
-    g@(_, edges) = toList cyclicGraph
-    (n, m)       = (length *** length) g
-    maxSSSRs     = m - n + 1
+    (reindex, cyclicGraph) = subgraphWithReindex graph . S.toList $ getCyclic graph
+    g@(_, edges)           = toList cyclicGraph
+    (n, m)                 = (length *** length) g
+    maxSSSRs               = m - n + 1
 
     edgeIndex :: Map (Int, Int) Int
     edgeIndex = ifoldl insertEdge M.empty edges
@@ -38,7 +40,9 @@ findSSSR graph = sssr
 
     (pid, pid') = calculatePidMatrices n m edgeIndex
     sssrEdges   = takeSSSR n maxSSSRs pid pid'
-    sssr        = fmap (edges !!) <$> sssrEdges
+    sssr        = fmap (backToOriginIndex . (edges !!)) <$> sssrEdges
+      where
+        backToOriginIndex = over _1 (reindex !>) . over _2 (reindex !>)
 
 takeSSSR :: Int -> Int -> Matrix (Int, [[Int]]) -> Matrix [[Int]] -> [[Int]]
 takeSSSR n maxSSSRs pid pid' = takeSSSR' [] [] 3 (1, 1)
