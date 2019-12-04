@@ -114,6 +114,11 @@ instance (Ord v, Eq v, Show v, Show e) => Show (GenericGraph v e) where
 instance Functor (GenericGraph v) where
   fmap f (GenericGraph idxArr revMap adjArr) = GenericGraph idxArr revMap (((f <$>) <$>) <$> adjArr)
 
+instance Ord v => Semigroup (GenericGraph v e) where
+  (<>) = sumGraphs
+
+instance (Ord v, Eq v) => Monoid (GenericGraph v e) where
+  mempty = fromList ([], [])
 
 -- | 'fmap' which acts on adjacency lists of each vertex.
 --
