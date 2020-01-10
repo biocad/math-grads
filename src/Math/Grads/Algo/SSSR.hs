@@ -5,22 +5,23 @@ module Math.Grads.Algo.SSSR
   ( findSSSR
   ) where
 
-import           Prelude                 hiding (map)
+import           Prelude                    hiding (map)
 
-import           Control.Arrow           ((***))
-import           Control.Lens            (over, _1, _2)
-import           Data.Bimap              ((!>))
-import           Data.List               (intersect, nub, sort)
-import           Data.List.Index         (ifoldl)
-import           Data.Map.Strict         (Map)
-import qualified Data.Map.Strict         as M (empty, insert, member, (!))
-import           Data.Matrix             (Matrix, matrix, unsafeGet, unsafeSet)
-import qualified Data.Set                as S
+import           Control.Arrow              ((***))
+import           Control.Lens               (over, _1, _2)
+import           Data.Bimap                 ((!>))
+import           Data.List                  (intersect, nub, sort)
+import           Data.List.Index            (ifoldl)
+import           Data.Map.Strict            (Map)
+import qualified Data.Map.Strict            as M (empty, insert, member, (!))
+import           Data.Matrix                (Matrix, matrix, unsafeGet,
+                                             unsafeSet)
+import qualified Data.Set                   as S
 
-import           Math.Grads.Algo.Cycles  (getCyclic)
-import           Math.Grads.GenericGraph (GenericGraph, subgraphWithReindex)
-import           Math.Grads.Graph        (EdgeList, toList)
-
+import           Math.Grads.Algo.Cycles     (getCyclic)
+import           Math.Grads.Algo.Traversals (getComps)
+import           Math.Grads.GenericGraph    (GenericGraph, subgraphWithReindex)
+import           Math.Grads.Graph           (EdgeList, toList)
 
 -- | RP-Path algorithm for searching the smallest set of smallest rings.
 -- <https://www.ncbi.nlm.nih.gov/pubmed/19805142>
@@ -31,7 +32,7 @@ findSSSR graph = sssr
     (reindex, cyclicGraph) = subgraphWithReindex graph . S.toList $ getCyclic graph
     g@(_, edges)           = toList cyclicGraph
     (n, m)                 = (length *** length) g
-    maxSSSRs               = m - n + 1
+    maxSSSRs               = m - n + length (getComps cyclicGraph)
 
     edgeIndex :: Map (Int, Int) Int
     edgeIndex = ifoldl insertEdge M.empty edges
