@@ -6,6 +6,7 @@ module Math.Grads.Algo.Traversals
   , dfsCycle
   , dfs
   , getComps
+  , getCompsWithReindex
   , getCompsIndices
   ) where
 
@@ -13,13 +14,15 @@ import           Control.Arrow               ((&&&))
 import           Control.Monad.State         (State, execState)
 import           Control.Monad.State.Class   (get, put)
 import qualified Data.Array                  as A
+import           Data.Bimap                  (Bimap)
 import           Data.List                   (findIndex)
 import           Data.Map                    (Map, keys, (!))
 import           Data.Maybe                  (fromJust)
 
 import           Math.Grads.Algo.Interaction (edgeListToMap, getIndices,
                                               getOtherEnd, matchEdges, (~=))
-import           Math.Grads.GenericGraph     (GenericGraph, gIndex, subgraph)
+import           Math.Grads.GenericGraph     (GenericGraph, gIndex,
+                                              subgraphWithReindex)
 import           Math.Grads.Graph            (EdgeList, Graph (..))
 import           Math.Grads.Utils            (nub)
 
@@ -45,11 +48,17 @@ dfs' gr (cur : rest) vis bs | cur `elem` vis = dfs' gr rest vis bs
 -- Note that indexation will be CHANGED.
 --
 getComps :: Ord v => GenericGraph v e -> [GenericGraph v e]
-getComps graph = res
+getComps graph = snd <$> getCompsWithReindex graph
+
+-- | Get graph components and mapping from old indices to
+-- new indices of resulting graph components.
+--
+getCompsWithReindex :: Ord v => GenericGraph v e -> [(Bimap Int Int, GenericGraph v e)]
+getCompsWithReindex graph = res
   where
     (_, edges) = toList graph
     comps      = getComps' edges [0..length (gIndex graph) - 1] [] []
-    res        = fmap (subgraph graph) comps
+    res        = fmap (subgraphWithReindex graph) comps
 
 -- | Get indices of vertices that belong to different connected components.
 --
