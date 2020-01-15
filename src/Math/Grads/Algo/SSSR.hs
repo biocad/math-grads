@@ -1,15 +1,15 @@
-{-# LANGUAGE MultiWayIf #-}
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE MultiWayIf          #-}
+{-# LANGUAGE RankNTypes          #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Math.Grads.Algo.SSSR
   ( findSSSR
   ) where
 
-import           Prelude                    hiding (map)
-
 import           Control.Arrow              ((***))
-import           Control.Lens               (over, _1, _2)
-import           Data.Bimap                 ((!>))
+import           Control.Lens               (over, to, toListOf, traverse, (%~),
+                                             (&), _1, _2)
+import           Data.Bimap                 (Bimap, (!>))
 import           Data.List                  (intersect, nub, sort)
 import           Data.List.Index            (ifoldl)
 import           Data.Map.Strict            (Map)
@@ -19,42 +19,62 @@ import           Data.Matrix                (Matrix, matrix, unsafeGet,
 import qualified Data.Set                   as S
 
 import           Math.Grads.Algo.Cycles     (getCyclic)
-import           Math.Grads.Algo.Traversals (getComps)
+import           Math.Grads.Algo.Traversals (getCompsWithReindex)
 import           Math.Grads.GenericGraph    (GenericGraph, subgraphWithReindex)
 import           Math.Grads.Graph           (EdgeList, toList)
+
 
 -- | RP-Path algorithm for searching the smallest set of smallest rings.
 -- <https://www.ncbi.nlm.nih.gov/pubmed/19805142>
 
-findSSSR :: Ord v => Ord e => GenericGraph v e -> [EdgeList e]
+-- | Find SSSR of any graph.
+--
+findSSSR :: (Ord v, Ord e) => GenericGraph v e -> [EdgeList e]
 findSSSR graph = sssr
   where
     (reindex, cyclicGraph) = subgraphWithReindex graph . S.toList $ getCyclic graph
-    g@(_, edges)           = toList cyclicGraph
-    (n, m)                 = (length *** length) g
-    maxSSSRs               = m - n + length (getComps cyclicGraph)
+    sssr = reindexCycles reindex $ findCyclicSSSR cyclicGraph
+
+-- | Find SSSR of cyclic graph, i.e. each graphs edge belongs at least 1 cycle.
+--
+findCyclicSSSR :: forall v e. (Ord v, Ord e) => GenericGraph v e -> [EdgeList e]
+findCyclicSSSR cyclicGraph = sssr
+  where
+    reindex2compList :: [(Bimap Int Int, GenericGraph v e)]
+    reindex2compList = getCompsWithReindex cyclicGraph
+
+    sssr = reindex2compList & traverse %~ over _2 findFusedSSSR
+                            & traverse %~ uncurry reindexCycles
+                            & concat
+
+-- | Find SSSR of fused graph, i.e. graph is cyclic and connected.
+--
+findFusedSSSR :: (Ord v, Ord e) => GenericGraph v e -> [EdgeList e]
+findFusedSSSR fusedGraph = sssr
+  where
+    g@(_, edges) = toList fusedGraph
+    (n, m)       = (length *** length) g
+    maxSSSRs     = m - n + 1
 
     edgeIndex :: Map (Int, Int) Int
     edgeIndex = ifoldl insertEdge M.empty edges
       where
-        insertEdge map ix (x, y, _) = M.insert (y, x) ix $ M.insert (x, y) ix map
+        insertEdge edgeMap ind (x, y, _) = M.insert (y, x) ind $ M.insert (x, y) ind edgeMap
 
     (pid, pid') = calculatePidMatrices n m edgeIndex
     sssrEdges   = takeSSSR n maxSSSRs pid pid'
-    sssr        = fmap (backToOriginIndex . (edges !!)) <$> sssrEdges
-      where
-        backToOriginIndex = over _1 (reindex !>) . over _2 (reindex !>)
+    sssr        = fmap (edges !!) <$> sssrEdges
 
 takeSSSR :: Int -> Int -> Matrix (Int, [[Int]]) -> Matrix [[Int]] -> [[Int]]
-takeSSSR n maxSSSRs pid pid' = takeSSSR' [] [] 3 (1, 1)
+takeSSSR n maxSSSRs pid pid' = go [] [] 3 (1, 1)
   where
-    takeSSSR' cycles edges len (i, j)
+    go cycles edges len (i, j)
       | (i, j) > (n, n) || length cycles >= maxSSSRs =
           cycles
       | curLen /= len || length ij < 1 || length ij == 1 && null ij' =
-          takeSSSR' cycles edges nextLen nextInd
+          go cycles edges nextLen nextInd
       | otherwise =
-          takeSSSR' nextCycles nextEdges nextLen nextInd
+          go nextCycles nextEdges nextLen nextInd
       where
         (ijDist, ij) = unsafeGet i j pid
         ij'          = unsafeGet i j pid'
@@ -68,9 +88,8 @@ takeSSSR n maxSSSRs pid pid' = takeSSSR' [] [] 3 (1, 1)
           cartesianProduct ij (if even len then ij else ij') notIntersects concatSort
           where
             notIntersects a b = null $ intersect a b
-            concatSort a b    = sort $ a ++ b
-
-            notContains a b       = length (a `intersect` b) < length b - 1
+            concatSort    a b = sort $ a ++ b
+            notContains   a b = length (a `intersect` b) < length b - 1
 
         nextCycles = cycles ++ newCycles
         nextEdges  = nub $ edges ++ concat newCycles
@@ -121,6 +140,12 @@ calculatePidMatrices n m edgeIndex = calcPids initPid initPid' (1, 1, 1)
           | (i, j) == (n, n) = (k + 1, 1,     1)
           | j == n           = (k,     i + 1, i + 1)
           | otherwise        = (k,          i,j + 1)
+
+reindexCycles :: Bimap Int Int -> [EdgeList e] -> [EdgeList e]
+reindexCycles reindex = fmap reindexCycle
+  where
+    reindexCycle :: EdgeList e -> EdgeList e
+    reindexCycle = toListOf $ traverse . to (over _1 (reindex !>) . over _2 (reindex !>))
 
 cartesianProduct :: Eq a => [a] -> [a] -> (a -> a -> Bool) -> (a -> a -> b) -> [b]
 cartesianProduct xs ys f g = [ g x y | x <- xs, y <- ys, f x y ]
