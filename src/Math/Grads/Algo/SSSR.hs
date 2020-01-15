@@ -137,9 +137,9 @@ calculatePidMatrices n m edgeIndex = calcPids initPid initPid' (1, 1, 1)
           | otherwise             = pid'
 
         nextInd
-          | (i, j) == (n, n) = (k + 1, 1,     1)
-          | j == n           = (k,     i + 1, i + 1)
-          | otherwise        = (k,          i,j + 1)
+          | (i, j) == (n, n) = (k + 1, 1,     1    )
+          | j == n           = (k,     i + 1, 1    )
+          | otherwise        = (k,         i, j + 1)
 
 reindexCycles :: Bimap Int Int -> [EdgeList e] -> [EdgeList e]
 reindexCycles reindex = fmap reindexCycle
