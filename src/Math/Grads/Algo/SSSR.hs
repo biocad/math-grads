@@ -7,8 +7,7 @@ module Math.Grads.Algo.SSSR
   ) where
 
 import           Control.Arrow              ((***))
-import           Control.Lens               (over, to, toListOf, traverse, (%~),
-                                             (&), _1, _2)
+import           Control.Lens               (over, to, toListOf, (%~), (&), _1, _2)
 import           Data.Bimap                 (Bimap, (!>))
 import           Data.List                  (intersect, nub, sort)
 import           Data.List.Index            (ifoldl)

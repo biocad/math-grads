@@ -1,0 +1,7 @@
+stages:
+  - build
+include:
+  - project: 'biocad/bcd-ci-common'
+    ref: master
+    file: '/build/haskell/haskell-test.yaml'
+  - local: 'iac/ci/test.yaml'
