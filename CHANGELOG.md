@@ -9,8 +9,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.1.6.7] - 2020-03-31
 ### Fixed
 - Compilation with `--pedantic`.
-### Added
-- GitLab CI.
 
 ## [0.1.6.6] - 2020-01-15
 ### Fixed

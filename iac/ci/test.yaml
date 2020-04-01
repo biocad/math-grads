@@ -1,5 +1,0 @@
-test:
-  extends: .haskell-test
-
-  only:
-    - branches
