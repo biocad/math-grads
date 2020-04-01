@@ -25,6 +25,6 @@ jobs:
   include:
     - stage: Hackage deploy
       # n is for "store credentials" question
-      script: echo -e "AlexKane\n${HACKAGE_PASSWORD}\nn" | stack upload --pvp-bounds upper --pvp-bounds lower .
+      script: echo -e "AlexKane\n${HACKAGE_PASSWORD}\nn" | stack upload --pvp-bounds both .
       on:
         tags: true
