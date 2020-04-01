@@ -26,5 +26,5 @@ deploy:
   password:
     # FIXME change for real one
     secure: "lpNsMB2e1GB30sD9IKd2lpQPPcGASn4iEO1eo+hpvmt53V1jpkiKVc/w5k1swMOfat+voDMS+mpN8YM0VN3hXQtGdeJwa+NGmDJIROPgoGZQhCq2qY9jB1EZ9lrbdwdiW44cz6l9Qa+o5pEMfbaBa5r8G7E3mOA2i8uc65701HAZ8SK0cdg3WExz+0/YEVY0C0bcp4XopAgPdcy/NyP9H1yDownsenYmbuCkghbPqxw2eoXf4CqgmrOCSUdba31LINkIV4AJr/XHsBvJQ1iJvaxZQwDZsVQ71BkU5Xh+b3ckXhc7CZZZpG5Zjp4k565VXz8VO/KgikEeN/97M/sSA7vd9wJlOez2r5aH5aLrREUMqknl0so+MaAPAm0CCNcM40lfSR7rb9SDP3z9j1p/2XgOpvNlykv6uBqIS9Jz0Grv3Aez9bILsBNPnunAz9HfCJdapJ03e/i9E9OOEn1m78JoPZCq7bKrRUMrxPyhqwEwP6/YHxNoqqzcPRuzIhtyfSahmIEHujWCuL3e/cGlFbaAdPQ/YtpCnroOMfnmbS9qzMDOfk2iya1WKV0kkuj6JXT3srtq2rm6g+vEtndke2xNTRKtV2NOcegcJE0JkN5+0JZjFs7jFgLY51bLTcptAGaR++ZNHiBb9G6EEVemPg0t2S/soa4GwsCjMidXLyo="
-  #on:
-  #  tags: true
+  on:
+    tags: true
