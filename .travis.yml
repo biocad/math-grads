@@ -20,10 +20,8 @@ install:
 
 jobs:
   include:
-    - stage: Build
-      script: stack build --test --bench --no-run-tests --no-run-benchmarks
-    - stage: Test
-      script: stack test --pedantic
+    - stage: Build and test
+      script: stack build --pedantic --test --bench --no-run-benchmarks
     - stage: Hackage deploy
       # n is for "store credentials" question
       script: echo -e "AlexKane\n${HACKAGE_PASSWORD}\nn" | stack upload --pvp-bounds both .
