@@ -19,7 +19,7 @@ install:
   - stack build --test --bench --only-dependencies
 
 script:
-  - stack test
+  - stack test --pedantic
 
 jobs:
   include:
