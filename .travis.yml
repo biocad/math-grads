@@ -18,11 +18,12 @@ before_install:
 install:
   - stack build --test --bench --only-dependencies
 
-script:
-  - stack test --pedantic
-
 jobs:
   include:
+    - stage: Build
+      script: stack build --test --bench
+    - stage: Test
+      script: stack test --pedantic
     - stage: Hackage deploy
       # n is for "store credentials" question
       script: echo -e "AlexKane\n${HACKAGE_PASSWORD}\nn" | stack upload --pvp-bounds both .
