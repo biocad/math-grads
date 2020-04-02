@@ -21,7 +21,7 @@ install:
 jobs:
   include:
     - stage: Build
-      script: stack build --test --bench
+      script: stack build --test --bench --no-run-tests --no-run-benchmarks
     - stage: Test
       script: stack test --pedantic
     - stage: Hackage deploy
