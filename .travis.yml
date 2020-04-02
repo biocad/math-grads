@@ -4,7 +4,7 @@ language: generic
 env:
   global:
       # HACKAGE_PASSWORD
-    - secure: "hNDw+Dx05r6+q9YxH803EKH7frFu2aAW5WBWPoE++QcVsnRzUw1RieiDx0O/fBMSK8xSAJ55GaEqvpfIUIUWy4kJ1856f9NtdyEcXcuj9gg+cCS9srF50ZwikXjUqFzssCTjmxKxzsl4RzJE6TknKob0qKbHx6MfkFDBOrF2ZpTuTs3h3j9PJ0EaEeJw7a6ZKEhB5WtVwN92pV668gigQ4dwxK4s6FbCRtyD1vHSwOcP4NvZI/tjc7FoNoimZFOkc/AzevnsE8q6LuHLBHynlnT538i7jHPlp2g5dziyfmpaubMhguuvKCwqjzU5FAv+rAKqB89x6jsO5JJ2BA68KOf19N5O8EtlV5g9p/BqZ/dcUcMFRKNbVTemBW8C1vQDzhV8Q9dvMvciTHy3sVlvMcrTKdiTxkn2jwdZxDprRtVL0cPNr+eI51Xtcd6UEHbcP97egH1sFuQX4MYyZmwFicN68SWEJhgYeIHlYLF81HVnC3nYPPAwTCgCph/hC4MU4pTdeYhXILZAHa/u5pDQ0JJeSOWMYJ39nTIHzg9YSXFfWj4ELENBovoJK8qUnyyh4im5Ky7Eo7A4D2cT86qem6vAdkM4IUg3QDCIUKvrsth7P2GLwD1/B/LvObl/hj5s9+Vt8o3cqnTeI7cO1IgYid1ku8i9nw48uRoO8j8cj0Q="
+    - secure: "bVtV8gJZ+s08cF7ONOUZ2ZDNfaDNCYVWTmuKthaKjBZOqSZM8SFtZFaczcvd25uGKmVg4z6V7EAoNmEGdLka/9ouySndXMlCECOn+WEX2v4YHWL7KiIxncKIpFeOGUygFqI2veDbxrQFR4YY+pGXlSuqQdfYgQq/OFpt9PzwXPS8malfOBVEtKJ9Su9vmANWUywGQbfb6/YcfHLFiLJdya9rcWDZsz+jJHr8BVY9w6pAhYPwQnovP1FUClPLHKAGVwshtkb/kFiI/zq9kAK5w57AAD/EIWLcBChcu93m5/1ROhSMosCGWl2Hq5CrNK81hRS8kTrMQG5UMRlkutdbaCNW+77Xz4avo8GOVCys7tNSr59pcXTsFEVH5VYKiWQFRoIjCJ52nkXClD3RTCNmp8u/yeogzjPtVZGJaMMNKEq2UFikWCFp/qQUAaxmuX/NIwECRGonN69TQvy59OI0v8D+/dt7kFYRO2k4wR3rcQ8P/MFWxmTH2d/UagBfbH10bSsiV/PY1WGf5AI7/s0VWYW8roa4fM+oXhEPcrPwFl2QAEWLXEnx4MbARIw9LdG2Flhvi6L68HlLzSrNF+69xMu6Pcc4voyRdpNiuiIlorloyEvkWSOFt5MHmlhiUL6LNqsrrER3sUxln0QKt1BSWRBNSBkghcBZ0RkfrqjfI9g="
 
 # Caching so the next build will be fast too.
 cache:
@@ -25,6 +25,6 @@ jobs:
   include:
     - stage: Hackage deploy
       # n is for "store credentials" question
-      script: echo -e "maksbotan\n${HACKAGE_PASSWORD}\nn" | stack upload --pvp-bounds both .
+      script: echo -e "AlexKane\n${HACKAGE_PASSWORD}\nn" | stack upload --pvp-bounds both .
       on:
         tags: true
