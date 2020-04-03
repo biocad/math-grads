@@ -1,6 +1,11 @@
 sudo: false
 language: generic
 
+env:
+  global:
+      # HACKAGE_PASSWORD
+    - secure: "bVtV8gJZ+s08cF7ONOUZ2ZDNfaDNCYVWTmuKthaKjBZOqSZM8SFtZFaczcvd25uGKmVg4z6V7EAoNmEGdLka/9ouySndXMlCECOn+WEX2v4YHWL7KiIxncKIpFeOGUygFqI2veDbxrQFR4YY+pGXlSuqQdfYgQq/OFpt9PzwXPS8malfOBVEtKJ9Su9vmANWUywGQbfb6/YcfHLFiLJdya9rcWDZsz+jJHr8BVY9w6pAhYPwQnovP1FUClPLHKAGVwshtkb/kFiI/zq9kAK5w57AAD/EIWLcBChcu93m5/1ROhSMosCGWl2Hq5CrNK81hRS8kTrMQG5UMRlkutdbaCNW+77Xz4avo8GOVCys7tNSr59pcXTsFEVH5VYKiWQFRoIjCJ52nkXClD3RTCNmp8u/yeogzjPtVZGJaMMNKEq2UFikWCFp/qQUAaxmuX/NIwECRGonN69TQvy59OI0v8D+/dt7kFYRO2k4wR3rcQ8P/MFWxmTH2d/UagBfbH10bSsiV/PY1WGf5AI7/s0VWYW8roa4fM+oXhEPcrPwFl2QAEWLXEnx4MbARIw9LdG2Flhvi6L68HlLzSrNF+69xMu6Pcc4voyRdpNiuiIlorloyEvkWSOFt5MHmlhiUL6LNqsrrER3sUxln0QKt1BSWRBNSBkghcBZ0RkfrqjfI9g="
+
 # Caching so the next build will be fast too.
 cache:
   directories:
@@ -13,13 +18,11 @@ before_install:
 install:
   - stack build --test --bench --only-dependencies
 
-script:
-  - stack test
-
-deploy:
-  provider: hackage
-  username: "AlexKane"
-  password:
-    secure: "U34maQRbtTq5MlkasL2LZbm33NqE2DxgfAkR5ABGUVDw6wy32wUQnpbiPE7J4p1TBypA8tq8IwKy2w2cLDclD4+yCXAY/zEviuMNxs1jvDJ4Mw+O7E4xRPxVi+1SDoE2D+aLndVaaKxABmZDKamtwNjX97EkknYPi4bluUPxXPnEzOOHh4cW8tTXCAl4MpMDI1faIp4BKFVVmZL6h3gdWTU+ysKTpL2ehV9U96PZhktXJKwgYB2YhJiOGISfdmDAchC0K+HBVIYBNJ4eWhUAgTMdmhZ/Jjb62YnuB9zrN9pRhg6Xd6VhiOdw64X3Z1k4yb+y0JY64atP2noVDxgpdwAkgeLGpPR2R/XdwYo1yvCdVU/7P2xvk/TgVrtwd9OIwHoJ1UKOHYtMOYCe4eJQg7y1QrClHSCxlEhGdlR3XqqolfciG0oEndGsSpUE7M5jkyacO7OyHyq8YdsB49oqVWHc9xEBJ3vk3+BNgW95ZA1FnqIDtM+TLREbyfu1GDUl8LHrYSLc7w51hLXDLkF5zWUU+RlnptHarQkKTGjYgtTVqy0ocvx/RQdwJbkAgGBK342hhbtttQUu2gwEBPm8QmyBXi5K4NToDlWo5pzteXB7V4+daSuBYw5s0uMwFgghRfk0VESWdpwsybldY4D2D2mr7RoSSUs+KEUI1gtDdHY="
-  on:
-    tags: true
+jobs:
+  include:
+    - stage: Build and test
+      script: stack build --pedantic --test --bench --no-run-benchmarks
+    - stage: Hackage deploy
+      # n is for "store credentials" question
+      script: echo -e "AlexKane\n${HACKAGE_PASSWORD}\nn" | stack upload --pvp-bounds both .
+      if: tag IS present
