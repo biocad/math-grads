@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [0.1.6.8] - 2023-02-03
+### Fixed
+- Fixes for GHC 9.2.5.
+
 ## [0.1.6.7] - 2020-03-31
 ### Fixed
 - Compilation with `--pedantic`.

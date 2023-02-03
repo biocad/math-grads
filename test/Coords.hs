@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -13,15 +14,20 @@ import           Test.Hspec
 
 instance Drawable GenericGraph Int Int
 
-pathToGraphs :: FilePath
-pathToGraphs = "data/Graphs.txt"
+pathToGraphs, pathToGraphsGHC9 :: FilePath
+pathToGraphs     = "data/Graphs.txt"
+pathToGraphsGHC9 = "data/GraphsGHC9.txt"
 
 roundPair :: (Float, Float) -> (Int, Int)
 roundPair (a, b) = (round a, round b)
 
 testMap :: IO (Map String (GenericGraph Int Int, Map Int (Int, Int)))
 testMap = do
+#if MIN_VERSION_GLASGOW_HASKELL(9, 2, 5, 0)
+    graphsInLines <- lines <$> readFile pathToGraphsGHC9
+#else
     graphsInLines <- lines <$> readFile pathToGraphs
+#endif
     let graphsInWords = fmap words graphsInLines
 
     let forMap = fmap (\(x : y : z : _) -> (x, (fromList (read y), fmap roundPair (read z)))) graphsInWords
